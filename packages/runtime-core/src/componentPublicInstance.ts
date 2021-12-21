@@ -391,6 +391,12 @@ export const PublicInstanceProxyHandlers: ProxyHandler<any> = {
         )
       }
     }
+    else {
+      let result = setupState[key];
+      if (result) {
+        return result;
+      }
+    }
   },
 
   set(
