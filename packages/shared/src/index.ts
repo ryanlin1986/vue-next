@@ -129,7 +129,7 @@ export const toHandlerKey = cacheStringFunction((str: string) =>
 
 // compare whether a value has changed, accounting for NaN.
 export const hasChanged = (value: any, oldValue: any): boolean =>
-  !Object.is(value, oldValue)
+  !Object.is(value, oldValue) && !(value == null && oldValue == null)
 
 export const invokeArrayFns = (fns: Function[], arg?: any) => {
   for (let i = 0; i < fns.length; i++) {

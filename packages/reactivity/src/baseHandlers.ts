@@ -47,34 +47,95 @@ const arrayInstrumentations = /*#__PURE__*/ createArrayInstrumentations()
 
 function createArrayInstrumentations() {
   const instrumentations: Record<string, Function> = {}
-  // instrument identity-sensitive Array methods to account for possible reactive
-  // values
-  ;(['includes', 'indexOf', 'lastIndexOf'] as const).forEach(key => {
-    instrumentations[key] = function (this: unknown[], ...args: unknown[]) {
-      const arr = toRaw(this) as any
-      for (let i = 0, l = this.length; i < l; i++) {
-        track(arr, TrackOpTypes.GET, i + '')
+    // instrument identity-sensitive Array methods to account for possible reactive
+    // values
+    ; (['includes', 'indexOf', 'lastIndexOf'] as const).forEach(key => {
+      instrumentations[key] = function (this: unknown[], ...args: unknown[]) {
+        const arr = toRaw(this) as any
+        for (let i = 0, l = this.length; i < l; i++) {
+          track(arr, TrackOpTypes.GET, i + '')
+        }
+        // we run the method using the original args first (which may be reactive)
+        const res = arr[key](...args)
+        if (res === -1 || res === false) {
+          // if that didn't work, run it again using raw values.
+          return arr[key](...args.map(toRaw))
+        } else {
+          return res
+        }
       }
-      // we run the method using the original args first (which may be reactive)
-      const res = arr[key](...args)
-      if (res === -1 || res === false) {
-        // if that didn't work, run it again using raw values.
-        return arr[key](...args.map(toRaw))
-      } else {
+    })
+    // instrument length-altering mutation methods to avoid length being tracked
+    // which leads to infinite loops in some cases (#2137)
+    ; (['push', 'pop', 'shift', 'unshift', 'splice'] as const).forEach(key => {
+      instrumentations[key] = function (this: unknown[], ...args: unknown[]) {
+        pauseTracking()
+        let raw = <any>toRaw(this);
+        let changes = <any>null;
+        if (raw.arrayChangeSubscribes) {
+          changes = [];
+
+          if (key === 'push') {
+            for (let i = 0; i < args.length; i++) {
+              changes.push({
+                status: "added",
+                index: raw.length + i,
+                value: args[i]
+              });
+            }
+          }
+          else if (key === 'shift') {
+            changes.push({
+              status: "deleted",
+              index: 0,
+              value: raw[0]
+            });
+          }
+          else if (key === 'splice') {
+            if (<number>args[1] > 0) {
+              for (let i = 0; i < <number>args[1]; i++) {
+                changes.push({
+                  status: "deleted",
+                  index: <number>args[0] + i,
+                  value: raw[<number>args[0] + i]
+                });
+              }
+            }
+            for (let i = 2; i < args.length; i++) {
+              changes.push({
+                status: "added",
+                index: <number>args[0] + i - 2,
+                value: args[i]
+              })
+            }
+          }
+        }
+
+        const res = (toRaw(this) as any)[key].apply(this, args)
+        resetTracking()
+        if (raw.arrayChangeSubscribes && changes?.length > 0) {
+          if (raw.arrayChangeSubscribes instanceof Array) {
+            for (let i = 0; i < raw.arrayChangeSubscribes.length; i++) {
+              raw.arrayChangeSubscribes[i](changes);
+            }
+          }
+          else {
+            raw.arrayChangeSubscribes(changes);
+          }
+        }
+        if (raw.subscribes) {
+          if (raw.subscribes instanceof Array) {
+            for (let i = 0; i < raw.subscribes.length; i++) {
+              raw.subscribes[i](raw);
+            }
+          }
+          else {
+            raw.subscribes(raw);
+          }
+        }
         return res
       }
-    }
-  })
-  // instrument length-altering mutation methods to avoid length being tracked
-  // which leads to infinite loops in some cases (#2137)
-  ;(['push', 'pop', 'shift', 'unshift', 'splice'] as const).forEach(key => {
-    instrumentations[key] = function (this: unknown[], ...args: unknown[]) {
-      pauseTracking()
-      const res = (toRaw(this) as any)[key].apply(this, args)
-      resetTracking()
-      return res
-    }
-  })
+    })
   return instrumentations
 }
 
@@ -87,14 +148,14 @@ function createGetter(isReadonly = false, shallow = false) {
     } else if (
       key === ReactiveFlags.RAW &&
       receiver ===
-        (isReadonly
-          ? shallow
-            ? shallowReadonlyMap
-            : readonlyMap
-          : shallow
+      (isReadonly
+        ? shallow
+          ? shallowReadonlyMap
+          : readonlyMap
+        : shallow
           ? shallowReactiveMap
           : reactiveMap
-        ).get(target)
+      ).get(target)
     ) {
       return target
     }

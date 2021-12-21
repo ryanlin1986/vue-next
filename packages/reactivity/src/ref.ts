@@ -98,6 +98,7 @@ function createRef(rawValue: unknown, shallow: boolean) {
 class RefImpl<T> {
   private _value: T
   private _rawValue: T
+  private _subscriptions: Array<Function> | Function = <any>undefined
 
   public dep?: Dep = undefined
   public readonly __v_isRef = true
@@ -115,9 +116,43 @@ class RefImpl<T> {
   set value(newVal) {
     newVal = this._shallow ? newVal : toRaw(newVal)
     if (hasChanged(newVal, this._rawValue)) {
+      let oldVal = this._rawValue;
       this._rawValue = newVal
       this._value = this._shallow ? newVal : toReactive(newVal)
       triggerRefValue(this, newVal)
+      if (this._subscriptions) {
+        if (this._subscriptions instanceof Array) {
+          for (let i = 0; i < this._subscriptions.length; i++) {
+            this._subscriptions[i](newVal, oldVal);
+          }
+        }
+        else {
+          this._subscriptions(newVal, oldVal);
+        }
+      }
+    }
+  }
+
+  subscribe(changed: Function, context: any) {
+    if (context)
+      changed = changed.bind(context);
+    if (!this._subscriptions) {
+      this.value;
+      this._subscriptions = changed;
+    }
+    else if (this._subscriptions instanceof Array) {
+      this._subscriptions.push(changed);
+    }
+    else {
+      this._subscriptions = [this._subscriptions, changed];
+    }
+    return {
+      dispose: () => {
+        if (this._subscriptions === changed)
+          this._subscriptions = <any>null;
+        else if (this._subscriptions instanceof Array)
+          this._subscriptions.splice(this._subscriptions.indexOf(changed), 1);
+      }
     }
   }
 }
@@ -130,8 +165,24 @@ export function unref<T>(ref: T | Ref<T>): T {
   return isRef(ref) ? (ref.value as any) : ref
 }
 
+function isNativeClass(thing: any) {
+  return thing.hasOwnProperty('prototype') && !thing.hasOwnProperty('arguments')
+}
+
 const shallowUnwrapHandlers: ProxyHandler<any> = {
-  get: (target, key, receiver) => unref(Reflect.get(target, key, receiver)),
+  get: (target, key, receiver) => {
+    let result = Reflect.get(target, key, receiver);
+    if (result && !target["__v_skip"]) {
+      return unref(result);
+    }
+    if (typeof result === "function" && !isNativeClass(result)) {
+      return result.bind(target);
+    }
+    if (result === undefined) {
+      return target[key];
+    }
+    return result;
+  },
   set: (target, key, value, receiver) => {
     const oldValue = target[key]
     if (isRef(oldValue) && !isRef(value)) {
@@ -210,7 +261,7 @@ class ObjectRefImpl<T extends object, K extends keyof T> {
     private readonly _object: T,
     private readonly _key: K,
     private readonly _defaultValue?: T[K]
-  ) {}
+  ) { }
 
   get value() {
     const val = this._object[this._key]
@@ -268,17 +319,17 @@ type BaseTypes = string | number | boolean
  * augmentations in its generated d.ts, so we have to manually append them
  * to the final generated d.ts in our build process.
  */
-export interface RefUnwrapBailTypes {}
+export interface RefUnwrapBailTypes { }
 
 export type ShallowUnwrapRef<T> = {
   [K in keyof T]: T[K] extends Ref<infer V>
-    ? V
-    : // if `V` is `unknown` that means it does not extend `Ref` and is undefined
-    T[K] extends Ref<infer V> | undefined
-    ? unknown extends V
-      ? undefined
-      : V | undefined
-    : T[K]
+  ? V
+  : // if `V` is `unknown` that means it does not extend `Ref` and is undefined
+  T[K] extends Ref<infer V> | undefined
+  ? unknown extends V
+  ? undefined
+  : V | undefined
+  : T[K]
 }
 
 export type UnwrapRef<T> = T extends ShallowRef<infer V>
@@ -298,6 +349,6 @@ export type UnwrapRefSimple<T> = T extends
   ? { [K in keyof T]: UnwrapRefSimple<T[K]> }
   : T extends object & { [ShallowReactiveMarker]?: never }
   ? {
-      [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]>
-    }
+    [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]>
+  }
   : T

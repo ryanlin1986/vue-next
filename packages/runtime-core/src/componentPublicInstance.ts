@@ -68,12 +68,12 @@ import { installCompatInstanceProperties } from './compat/instance'
  * vm.$router.push('/')
  * ```
  */
-export interface ComponentCustomProperties {}
+export interface ComponentCustomProperties { }
 
 type IsDefaultMixinComponent<T> = T extends ComponentOptionsMixin
   ? ComponentOptionsMixin extends T
-    ? true
-    : false
+  ? true
+  : false
   : false
 
 type MixinToOptionTypes<T> = T extends ComponentOptionsBase<
@@ -89,8 +89,8 @@ type MixinToOptionTypes<T> = T extends ComponentOptionsBase<
   infer Defaults
 >
   ? OptionTypesType<P & {}, B & {}, D & {}, C & {}, M & {}, Defaults & {}> &
-      IntersectionMixin<Mixin> &
-      IntersectionMixin<Extends>
+  IntersectionMixin<Mixin> &
+  IntersectionMixin<Extends>
   : never
 
 // ExtractMixin(map type) is used to resolve circularly references
@@ -105,7 +105,7 @@ type IntersectionMixin<T> = IsDefaultMixinComponent<T> extends true
 type UnwrapMixinsType<
   T,
   Type extends OptionTypesKeys
-> = T extends OptionTypesType ? T[Type] : never
+  > = T extends OptionTypesType ? T[Type] : never
 
 type EnsureNonVoid<T> = T extends void ? {} : T
 
@@ -122,12 +122,12 @@ export type ComponentPublicInstanceConstructor<
   D = any,
   C extends ComputedOptions = ComputedOptions,
   M extends MethodOptions = MethodOptions
-> = {
-  __isFragment?: never
-  __isTeleport?: never
-  __isSuspense?: never
-  new (...args: any[]): T
-}
+  > = {
+    __isFragment?: never
+    __isTeleport?: never
+    __isSuspense?: never
+    new(...args: any[]): T
+  }
 
 export type CreateComponentPublicInstance<
   P = {},
@@ -146,23 +146,23 @@ export type CreateComponentPublicInstance<
   PublicB = UnwrapMixinsType<PublicMixin, 'B'> & EnsureNonVoid<B>,
   PublicD = UnwrapMixinsType<PublicMixin, 'D'> & EnsureNonVoid<D>,
   PublicC extends ComputedOptions = UnwrapMixinsType<PublicMixin, 'C'> &
-    EnsureNonVoid<C>,
+  EnsureNonVoid<C>,
   PublicM extends MethodOptions = UnwrapMixinsType<PublicMixin, 'M'> &
-    EnsureNonVoid<M>,
+  EnsureNonVoid<M>,
   PublicDefaults = UnwrapMixinsType<PublicMixin, 'Defaults'> &
-    EnsureNonVoid<Defaults>
-> = ComponentPublicInstance<
-  PublicP,
-  PublicB,
-  PublicD,
-  PublicC,
-  PublicM,
-  E,
-  PublicProps,
-  PublicDefaults,
-  MakeDefaultsOptional,
-  ComponentOptionsBase<P, B, D, C, M, Mixin, Extends, E, string, Defaults>
->
+  EnsureNonVoid<Defaults>
+  > = ComponentPublicInstance<
+    PublicP,
+    PublicB,
+    PublicD,
+    PublicC,
+    PublicM,
+    E,
+    PublicProps,
+    PublicDefaults,
+    MakeDefaultsOptional,
+    ComponentOptionsBase<P, B, D, C, M, Mixin, Extends, E, string, Defaults>
+  >
 
 // public properties exposed on the proxy, which is used as the render context
 // in templates (as `this` in the render option)
@@ -177,28 +177,28 @@ export type ComponentPublicInstance<
   Defaults = {},
   MakeDefaultsOptional extends boolean = false,
   Options = ComponentOptionsBase<any, any, any, any, any, any, any, any, any>
-> = {
-  $: ComponentInternalInstance
-  $data: D
-  $props: MakeDefaultsOptional extends true
+  > = {
+    $: ComponentInternalInstance
+    $data: D
+    $props: MakeDefaultsOptional extends true
     ? Partial<Defaults> & Omit<P & PublicProps, keyof Defaults>
     : P & PublicProps
-  $attrs: Data
-  $refs: Data
-  $slots: Slots
-  $root: ComponentPublicInstance | null
-  $parent: ComponentPublicInstance | null
-  $emit: EmitFn<E>
-  $el: any
-  $options: Options & MergedComponentOptionsOverride
-  $forceUpdate: () => void
-  $nextTick: typeof nextTick
-  $watch(
-    source: string | Function,
-    cb: Function,
-    options?: WatchOptions
-  ): WatchStopHandle
-} & P &
+    $attrs: Data
+    $refs: Data
+    $slots: Slots
+    $root: ComponentPublicInstance | null
+    $parent: ComponentPublicInstance | null
+    $emit: EmitFn<E>
+    $el: any
+    $options: Options & MergedComponentOptionsOverride
+    $forceUpdate: () => void
+    $nextTick: typeof nextTick
+    $watch(
+      source: string | Function,
+      cb: Function,
+      options?: WatchOptions
+    ): WatchStopHandle
+  } & P &
   ShallowUnwrapRef<B> &
   UnwrapNestedRefs<D> &
   ExtractComputedReturns<C> &
@@ -348,7 +348,7 @@ export const PublicInstanceProxyHandlers: ProxyHandler<any> = {
     } else if (
       // global properties
       ((globalProperties = appContext.config.globalProperties),
-      hasOwn(globalProperties, key))
+        hasOwn(globalProperties, key))
     ) {
       if (__COMPAT__) {
         const desc = Object.getOwnPropertyDescriptor(globalProperties, key)!
@@ -378,12 +378,16 @@ export const PublicInstanceProxyHandlers: ProxyHandler<any> = {
           `Property ${JSON.stringify(
             key
           )} must be accessed via $data because it starts with a reserved ` +
-            `character ("$" or "_") and is not proxied on the render context.`
+          `character ("$" or "_") and is not proxied on the render context.`
         )
       } else if (instance === currentRenderingInstance) {
+        let result = setupState[key];
+        if (result) {
+          return result;
+        }
         warn(
           `Property ${JSON.stringify(key)} was accessed during render ` +
-            `but is not defined on instance.`
+          `but is not defined on instance.`
         )
       }
     }
@@ -411,7 +415,7 @@ export const PublicInstanceProxyHandlers: ProxyHandler<any> = {
       __DEV__ &&
         warn(
           `Attempting to mutate public property "${key}". ` +
-            `Properties starting with $ are reserved and readonly.`,
+          `Properties starting with $ are reserved and readonly.`,
           instance
         )
       return false
@@ -452,7 +456,7 @@ if (__DEV__ && !__TEST__) {
   PublicInstanceProxyHandlers.ownKeys = (target: ComponentRenderContext) => {
     warn(
       `Avoid app logic that relies on enumerating keys on a component instance. ` +
-        `The keys will be empty in production mode to avoid performance overhead.`
+      `The keys will be empty in production mode to avoid performance overhead.`
     )
     return Reflect.ownKeys(target)
   }
@@ -544,7 +548,7 @@ export function exposeSetupStateOnRenderContext(
           `setup() return property ${JSON.stringify(
             key
           )} should not start with "$" or "_" ` +
-            `which are reserved prefixes for Vue internals.`
+          `which are reserved prefixes for Vue internals.`
         )
         return
       }

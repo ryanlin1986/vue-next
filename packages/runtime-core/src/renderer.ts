@@ -819,6 +819,9 @@ function baseCreateRenderer(
     if (dirs) {
       invokeDirectiveHook(n2, n1, parentComponent, 'beforeUpdate')
     }
+    if((<any>n2)["nd"]){
+        patchFlag = 16;
+    }
     parentComponent && toggleRecurse(parentComponent, true)
 
     if (__DEV__ && isHmrUpdating) {

@@ -15,6 +15,8 @@ export function normalizeStyle(
         : (normalizeStyle(item) as NormalizedStyle)
       if (normalized) {
         for (const key in normalized) {
+          if (normalized[key] === undefined)
+            continue;
           res[key] = normalized[key]
         }
       }

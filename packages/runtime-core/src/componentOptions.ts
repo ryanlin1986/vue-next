@@ -17,7 +17,7 @@ import {
   NOOP,
   isPromise
 } from '@vue/shared'
-import { computed, isRef, Ref } from '@vue/reactivity'
+import { computed, isRef, Ref, shallowReactive } from '@vue/reactivity'
 import {
   watch,
   WatchOptions,
@@ -42,7 +42,6 @@ import {
   onServerPrefetch
 } from './apiLifecycle'
 import {
-  reactive,
   ComputedGetter,
   WritableComputedOptions
 } from '@vue/reactivity'
@@ -662,7 +661,7 @@ export function applyOptions(instance: ComponentInternalInstance) {
     if (!isObject(data)) {
       __DEV__ && warn(`data() should return an object.`)
     } else {
-      instance.data = reactive(data)
+      instance.data = shallowReactive(data)
       if (__DEV__) {
         for (const key in data) {
           checkDuplicateProperties!(OptionTypes.DATA, key)

@@ -46,7 +46,7 @@ import { callWithAsyncErrorHandling, ErrorCodes } from './errorHandling'
 
 export const Fragment = Symbol(__DEV__ ? 'Fragment' : undefined) as any as {
   __isFragment: true
-  new (): {
+  new(): {
     $props: VNodeProps
   }
 }
@@ -128,7 +128,7 @@ export interface VNode<
   HostNode = RendererNode,
   HostElement = RendererElement,
   ExtraProps = { [key: string]: any }
-> {
+  > {
   /**
    * @internal
    */
@@ -164,6 +164,7 @@ export interface VNode<
   // DOM
   el: HostNode | null
   anchor: HostNode | null // fragment anchor
+  forItem: any;
   target: HostElement | null // teleport target
   targetAnchor: HostNode | null // teleport target anchor
   /**
@@ -353,9 +354,9 @@ export function isSameVNodeType(n1: VNode, n2: VNode): boolean {
 
 let vnodeArgsTransformer:
   | ((
-      args: Parameters<typeof _createVNode>,
-      instance: ComponentInternalInstance | null
-    ) => Parameters<typeof _createVNode>)
+    args: Parameters<typeof _createVNode>,
+    instance: ComponentInternalInstance | null
+  ) => Parameters<typeof _createVNode>)
   | undefined
 
 /**
@@ -439,7 +440,7 @@ function createBaseVNode(
     normalizeChildren(vnode, children)
     // normalize suspense children
     if (__FEATURE_SUSPENSE__ && shapeFlag & ShapeFlags.SUSPENSE) {
-      ;(type as typeof SuspenseImpl).normalize(vnode)
+      ; (type as typeof SuspenseImpl).normalize(vnode)
     }
   } else if (children) {
     // compiled element vnode - if children is passed, only possible types are
@@ -545,22 +546,22 @@ function _createVNode(
   const shapeFlag = isString(type)
     ? ShapeFlags.ELEMENT
     : __FEATURE_SUSPENSE__ && isSuspense(type)
-    ? ShapeFlags.SUSPENSE
-    : isTeleport(type)
-    ? ShapeFlags.TELEPORT
-    : isObject(type)
-    ? ShapeFlags.STATEFUL_COMPONENT
-    : isFunction(type)
-    ? ShapeFlags.FUNCTIONAL_COMPONENT
-    : 0
+      ? ShapeFlags.SUSPENSE
+      : isTeleport(type)
+        ? ShapeFlags.TELEPORT
+        : isObject(type)
+          ? ShapeFlags.STATEFUL_COMPONENT
+          : isFunction(type)
+            ? ShapeFlags.FUNCTIONAL_COMPONENT
+            : 0
 
   if (__DEV__ && shapeFlag & ShapeFlags.STATEFUL_COMPONENT && isProxy(type)) {
     type = toRaw(type)
     warn(
       `Vue received a Component which was made a reactive object. This can ` +
-        `lead to unnecessary performance overhead, and should be avoided by ` +
-        `marking the component with \`markRaw\` or using \`shallowRef\` ` +
-        `instead of \`ref\`.`,
+      `lead to unnecessary performance overhead, and should be avoided by ` +
+      `marking the component with \`markRaw\` or using \`shallowRef\` ` +
+      `instead of \`ref\`.`,
       `\nComponent that was made reactive: `,
       type
     )
@@ -603,9 +604,9 @@ export function cloneVNode<T, U>(
     ref:
       extraProps && extraProps.ref
         ? // #2078 in the case of <component :is="vnode" ref="extra"/>
-          // if the vnode itself already has a ref, cloneVNode will need to merge
-          // the refs so the single vnode can be set on multiple refs
-          mergeRef && ref
+        // if the vnode itself already has a ref, cloneVNode will need to merge
+        // the refs so the single vnode can be set on multiple refs
+        mergeRef && ref
           ? isArray(ref)
             ? ref.concat(normalizeRef(extraProps)!)
             : [ref, normalizeRef(extraProps)!]
@@ -646,7 +647,8 @@ export function cloneVNode<T, U>(
     ssContent: vnode.ssContent && cloneVNode(vnode.ssContent),
     ssFallback: vnode.ssFallback && cloneVNode(vnode.ssFallback),
     el: vnode.el,
-    anchor: vnode.anchor
+    anchor: vnode.anchor,
+    forItem: vnode.forItem
   }
   if (__COMPAT__) {
     defineLegacyVNodeProperties(cloned)
@@ -752,16 +754,16 @@ export function normalizeChildren(vnode: VNode, children: unknown) {
       if (!slotFlag && !(InternalObjectKey in children!)) {
         // if slots are not normalized, attach context instance
         // (compiled / normalized slots already have context)
-        ;(children as RawSlots)._ctx = currentRenderingInstance
+        ; (children as RawSlots)._ctx = currentRenderingInstance
       } else if (slotFlag === SlotFlags.FORWARDED && currentRenderingInstance) {
         // a child component receives forwarded slots from the parent.
         // its slot type is determined by its parent's slot type.
         if (
           (currentRenderingInstance.slots as RawSlots)._ === SlotFlags.STABLE
         ) {
-          ;(children as RawSlots)._ = SlotFlags.STABLE
+          ; (children as RawSlots)._ = SlotFlags.STABLE
         } else {
-          ;(children as RawSlots)._ = SlotFlags.DYNAMIC
+          ; (children as RawSlots)._ = SlotFlags.DYNAMIC
           vnode.patchFlag |= PatchFlags.DYNAMIC_SLOTS
         }
       }

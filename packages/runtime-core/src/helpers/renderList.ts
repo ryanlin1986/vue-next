@@ -1,4 +1,4 @@
-import { VNode, VNodeChild } from '../vnode'
+import { VNode, VNodeChild, Fragment } from '../vnode'
 import { isArray, isString, isObject } from '@vue/shared'
 import { warn } from '../warning'
 
@@ -62,7 +62,14 @@ export function renderList(
   if (isArray(source) || isString(source)) {
     ret = new Array(source.length)
     for (let i = 0, l = source.length; i < l; i++) {
-      ret[i] = renderItem(source[i], i, undefined, cached && cached[i])
+      let item = <any>renderItem(source[i], i, undefined, cached && cached[i])
+      ret[i] = item;
+      item.forItem = source[i];
+      if (item.type == Fragment) {
+        for (let j = 0; j < item.children.length; j++) {
+          item.children[j].forItem = source[i];
+        }
+      }
     }
   } else if (typeof source === 'number') {
     if (__DEV__ && !Number.isInteger(source)) {

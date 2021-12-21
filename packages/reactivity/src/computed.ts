@@ -28,6 +28,7 @@ class ComputedRefImpl<T> {
 
   private _value!: T
   private _dirty = true
+  private _subscriptions: Array<Function> | Function = <any>undefined
   public readonly effect: ReactiveEffect<T>
 
   public readonly __v_isRef = true
@@ -42,6 +43,20 @@ class ComputedRefImpl<T> {
       if (!this._dirty) {
         this._dirty = true
         triggerRefValue(this)
+        if (this._subscriptions) {
+          let oldVal = this._value;
+          let newValue = this.value;
+          if (oldVal != newValue) {
+            if (this._subscriptions instanceof Array) {
+              for (let i = 0; i < this._subscriptions.length; i++) {
+                this._subscriptions[i](newValue, oldVal);
+              }
+            }
+            else {
+              this._subscriptions(newValue, oldVal);
+            }
+          }
+        }
       }
     })
     this[ReactiveFlags.IS_READONLY] = isReadonly
@@ -53,13 +68,73 @@ class ComputedRefImpl<T> {
     trackRefValue(self)
     if (self._dirty) {
       self._dirty = false
-      self._value = self.effect.run()!
+      let value = self.effect.run()!;
+      if (value instanceof Promise) {
+        value.then(value => {
+          if (self._value !== value) {
+            let oldVal = self._value;
+            self._value = value;
+            triggerRefValue(this);
+            if (this._subscriptions) {
+              if (this._subscriptions instanceof Array) {
+                for (let i = 0; i < this._subscriptions.length; i++) {
+                  this._subscriptions[i](value, oldVal);
+                }
+              }
+              else {
+                this._subscriptions(value, oldVal);
+              }
+            }
+          }
+        });
+      }
+      else {
+        if (self._value !== value) {
+          let oldVal = self._value;
+          self._value = value;
+          triggerRefValue(this);
+          if (this._subscriptions) {
+            if (this._subscriptions instanceof Array) {
+              for (let i = 0; i < this._subscriptions.length; i++) {
+                this._subscriptions[i](value, oldVal);
+              }
+            }
+            else {
+              this._subscriptions(value, oldVal);
+            }
+          }
+        }
+      }
     }
     return self._value
   }
 
   set value(newValue: T) {
     this._setter(newValue)
+  }
+
+
+  subscribe(changed: Function, context: any) {
+    if (context)
+      changed = changed.bind(context);
+    if (!this._subscriptions) {
+      this.value;
+      this._subscriptions = changed;
+    }
+    else if (this._subscriptions instanceof Array) {
+      this._subscriptions.push(changed);
+    }
+    else {
+      this._subscriptions = [this._subscriptions, changed];
+    }
+    return {
+      dispose: () => {
+        if (this._subscriptions === changed)
+          this._subscriptions = <any>null;
+        else if (this._subscriptions instanceof Array)
+          this._subscriptions.splice(this._subscriptions.indexOf(changed), 1);
+      }
+    }
   }
 }
 
@@ -83,8 +158,8 @@ export function computed<T>(
     getter = getterOrOptions
     setter = __DEV__
       ? () => {
-          console.warn('Write operation failed: computed value is readonly')
-        }
+        console.warn('Write operation failed: computed value is readonly')
+      }
       : NOOP
   } else {
     getter = getterOrOptions.get

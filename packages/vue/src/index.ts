@@ -78,13 +78,46 @@ function compileToFunction(
     __GLOBAL__ ? new Function(code)() : new Function('Vue', code)(runtimeDom)
   ) as RenderFunction
 
-  // mark the function as runtime compiled
-  ;(render as InternalRenderFunction)._rc = true
+    // mark the function as runtime compiled
+    ; (render as InternalRenderFunction)._rc = true
 
   return (compileCache[key] = render)
 }
 
+
+function compileToCode(
+  template: string,
+  options?: CompilerOptions
+): String {
+  const { code } = compile(
+    template,
+    extend(
+      {
+        hoistStatic: true,
+        onError: __DEV__ ? onError : undefined,
+        onWarn: __DEV__ ? e => onError(e, true) : NOOP
+      } as CompilerOptions,
+      options
+    )
+  )
+
+  function onError(err: CompilerError, asWarning = false) {
+    const message = asWarning
+      ? err.message
+      : `Template compilation error: ${err.message}`
+    const codeFrame =
+      err.loc &&
+      generateCodeFrame(
+        template as string,
+        err.loc.start.offset,
+        err.loc.end.offset
+      )
+    warn(codeFrame ? `${message}\n${codeFrame}` : message)
+  }
+  return code;
+}
+
 registerRuntimeCompiler(compileToFunction)
 
-export { compileToFunction as compile }
+export { compileToFunction as compile, compileToCode }
 export * from '@vue/runtime-dom'
