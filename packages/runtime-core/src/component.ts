@@ -12,7 +12,6 @@ import {
 } from '@vue/reactivity'
 import {
   ComponentPublicInstance,
-  PublicInstanceProxyHandlers,
   createDevRenderContext,
   exposePropsOnRenderContext,
   exposeSetupStateOnRenderContext,
