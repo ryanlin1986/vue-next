@@ -614,7 +614,7 @@ function baseCreateRenderer(
   ) => {
     let el: RendererElement
     let vnodeHook: VNodeHook | undefined | null
-    const { type, props, shapeFlag, transition, patchFlag, dirs } = vnode
+    let { type, props, shapeFlag, transition, patchFlag, dirs } = vnode
     if (
       !__DEV__ &&
       vnode.el &&
@@ -654,6 +654,7 @@ function baseCreateRenderer(
       if (dirs) {
         invokeDirectiveHook(vnode, null, parentComponent, 'created')
       }
+      props = vnode.props;
       // props
       if (props) {
         for (const key in props) {
