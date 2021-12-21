@@ -2,6 +2,8 @@
 
 export const version = __VERSION__
 export {
+  pauseTracking,
+  resetTracking,
   // core
   computed,
   reactive,
@@ -138,12 +140,12 @@ import { ComponentInternalInstance } from './component'
 declare module '@vue/reactivity' {
   export interface RefUnwrapBailTypes {
     runtimeCoreBailTypes:
-      | VNode
-      | {
-          // directly bailing on ComponentPublicInstance results in recursion
-          // so we use this as a bail hint
-          $: ComponentInternalInstance
-        }
+    | VNode
+    | {
+      // directly bailing on ComponentPublicInstance results in recursion
+      // so we use this as a bail hint
+      $: ComponentInternalInstance
+    }
   }
 }
 
