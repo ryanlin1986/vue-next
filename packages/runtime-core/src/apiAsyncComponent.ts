@@ -201,7 +201,7 @@ export function defineAsyncComponent<
           return createVNode(errorComponent as ConcreteComponent, {
             error: error.value
           })
-        } else if (loadingComponent && !delayed.value) {
+        } else if (loadingComponent) {
           return createVNode(loadingComponent as ConcreteComponent)
         }
       }

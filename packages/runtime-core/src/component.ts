@@ -73,7 +73,7 @@ export type Data = Record<string, unknown>
 /**
  * For extending allowed non-declared props on components in TSX
  */
-export interface ComponentCustomProps {}
+export interface ComponentCustomProps { }
 
 /**
  * Default allowed non-declared props on component in TSX
@@ -120,7 +120,7 @@ export interface FunctionalComponent<P = {}, E extends EmitsOptions = {}>
 }
 
 export interface ClassComponent {
-  new (...args: any[]): ComponentPublicInstance<any, any, any, any, any>
+  new(...args: any[]): ComponentPublicInstance<any, any, any, any, any>
   __vccOpts: ComponentOptions
 }
 
@@ -136,7 +136,7 @@ export type ConcreteComponent<
   D = any,
   C extends ComputedOptions = ComputedOptions,
   M extends MethodOptions = MethodOptions
-> =
+  > =
   | ComponentOptions<Props, RawBindings, D, C, M>
   | FunctionalComponent<Props, any>
 
@@ -150,7 +150,7 @@ export type Component<
   D = any,
   C extends ComputedOptions = ComputedOptions,
   M extends MethodOptions = MethodOptions
-> =
+  > =
   | ConcreteComponent<Props, RawBindings, D, C, M>
   | ComponentPublicInstanceConstructor<Props>
 
@@ -622,8 +622,8 @@ function setupStatefulComponent(
     if (Component.compilerOptions && isRuntimeOnly()) {
       warn(
         `"compilerOptions" is only supported when using a build of Vue that ` +
-          `includes the runtime compiler. Since you are using a runtime-only ` +
-          `build, the options should be passed via your build tool config instead.`
+        `includes the runtime compiler. Since you are using a runtime-only ` +
+        `build, the options should be passed via your build tool config instead.`
       )
     }
   }
@@ -631,7 +631,7 @@ function setupStatefulComponent(
   instance.accessCache = Object.create(null)
   // 1. create public instance / render proxy
   // also mark it raw so it's never observed
-  instance.proxy = markRaw(new Proxy(instance.ctx, PublicInstanceProxyHandlers))
+  instance.proxy = markRaw(new Proxy(instance.ctx, RuntimeCompiledPublicInstanceProxyHandlers))
   if (__DEV__) {
     exposePropsOnRenderContext(instance)
   }
@@ -671,7 +671,7 @@ function setupStatefulComponent(
       } else if (__DEV__) {
         warn(
           `setup() returned a Promise, but the version of Vue you are using ` +
-            `does not support it yet.`
+          `does not support it yet.`
         )
       }
     } else {
@@ -700,7 +700,7 @@ export function handleSetupResult(
     if (__DEV__ && isVNode(setupResult)) {
       warn(
         `setup() should not return VNodes directly - ` +
-          `return a render function instead.`
+        `return a render function instead.`
       )
     }
     // setup returned bindings.
@@ -714,8 +714,7 @@ export function handleSetupResult(
     }
   } else if (__DEV__ && setupResult !== undefined) {
     warn(
-      `setup() should return an object. Received: ${
-        setupResult === null ? 'null' : typeof setupResult
+      `setup() should return an object. Received: ${setupResult === null ? 'null' : typeof setupResult
       }`
     )
   }
@@ -829,14 +828,14 @@ export function finishComponentSetup(
     if (!compile && Component.template) {
       warn(
         `Component provided template option but ` +
-          `runtime compilation is not supported in this build of Vue.` +
-          (__ESM_BUNDLER__
-            ? ` Configure your bundler to alias "vue" to "vue/dist/vue.esm-bundler.js".`
-            : __ESM_BROWSER__
+        `runtime compilation is not supported in this build of Vue.` +
+        (__ESM_BUNDLER__
+          ? ` Configure your bundler to alias "vue" to "vue/dist/vue.esm-bundler.js".`
+          : __ESM_BROWSER__
             ? ` Use "vue.esm-browser.js" instead.`
             : __GLOBAL__
-            ? ` Use "vue.global.js" instead.`
-            : ``) /* should not happen */
+              ? ` Use "vue.global.js" instead.`
+              : ``) /* should not happen */
       )
     } else {
       warn(`Component is missing template or render function.`)
@@ -849,26 +848,26 @@ function createAttrsProxy(instance: ComponentInternalInstance): Data {
     instance.attrs,
     __DEV__
       ? {
-          get(target, key: string) {
-            markAttrsAccessed()
-            track(instance, TrackOpTypes.GET, '$attrs')
-            return target[key]
-          },
-          set() {
-            warn(`setupContext.attrs is readonly.`)
-            return false
-          },
-          deleteProperty() {
-            warn(`setupContext.attrs is readonly.`)
-            return false
-          }
+        get(target, key: string) {
+          markAttrsAccessed()
+          track(instance, TrackOpTypes.GET, '$attrs')
+          return target[key]
+        },
+        set() {
+          warn(`setupContext.attrs is readonly.`)
+          return false
+        },
+        deleteProperty() {
+          warn(`setupContext.attrs is readonly.`)
+          return false
         }
+      }
       : {
-          get(target, key: string) {
-            track(instance, TrackOpTypes.GET, '$attrs')
-            return target[key]
-          }
+        get(target, key: string) {
+          track(instance, TrackOpTypes.GET, '$attrs')
+          return target[key]
         }
+      }
   )
 }
 
@@ -965,7 +964,7 @@ export function formatComponentName(
     name =
       inferFromRegistry(
         instance.components ||
-          (instance.parent.type as ComponentOptions).components
+        (instance.parent.type as ComponentOptions).components
       ) || inferFromRegistry(instance.appContext.components)
   }
 

@@ -255,6 +255,7 @@ export function toRefs<T extends object>(object: T): ToRefs<T> {
 }
 
 class ObjectRefImpl<T extends object, K extends keyof T> {
+  private _subscriptions: Array<Function> | Function = <any>undefined
   public readonly __v_isRef = true
 
   constructor(
@@ -269,7 +270,41 @@ class ObjectRefImpl<T extends object, K extends keyof T> {
   }
 
   set value(newVal) {
-    this._object[this._key] = newVal
+    let oldValue = this.value;
+    this._object[this._key] = newVal;
+    if (this._subscriptions) {
+      if (this._subscriptions instanceof Array) {
+        for (let i = 0; i < this._subscriptions.length; i++) {
+          this._subscriptions[i](newVal, oldValue);
+        }
+      }
+      else {
+        this._subscriptions(newVal, oldValue);
+      }
+    }
+  }
+
+  subscribe(changed: Function, context: any) {
+    if (context)
+      changed = changed.bind(context);
+    if (!this._subscriptions) {
+      this.value;
+      this._subscriptions = changed;
+    }
+    else if (this._subscriptions instanceof Array) {
+      this._subscriptions.push(changed);
+    }
+    else {
+      this._subscriptions = [this._subscriptions, changed];
+    }
+    return {
+      dispose: () => {
+        if (this._subscriptions === changed)
+          this._subscriptions = <any>null;
+        else if (this._subscriptions instanceof Array)
+          this._subscriptions.splice(this._subscriptions.indexOf(changed), 1);
+      }
+    }
   }
 }
 

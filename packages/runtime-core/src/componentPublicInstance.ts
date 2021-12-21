@@ -536,20 +536,29 @@ export function exposePropsOnRenderContext(
   }
 }
 
+function getAllFuncs(toCheck: any) {
+  const props = [];
+  let obj = toCheck;
+  do {
+    props.push(...Object.getOwnPropertyNames(obj));
+  } while (obj = Object.getPrototypeOf(obj));
+  return props;
+}
+
 // dev only
 export function exposeSetupStateOnRenderContext(
   instance: ComponentInternalInstance
 ) {
   const { ctx, setupState } = instance
-  Object.keys(toRaw(setupState)).forEach(key => {
+  getAllFuncs(toRaw(setupState)).forEach(key => {
     if (!setupState.__isScriptSetup) {
       if (key[0] === '$' || key[0] === '_') {
-        warn(
-          `setup() return property ${JSON.stringify(
-            key
-          )} should not start with "$" or "_" ` +
-          `which are reserved prefixes for Vue internals.`
-        )
+        // warn(
+        //   `setup() return property ${JSON.stringify(
+        //     key
+        //   )} should not start with "$" or "_" ` +
+        //   `which are reserved prefixes for Vue internals.`
+        // )
         return
       }
       Object.defineProperty(ctx, key, {
