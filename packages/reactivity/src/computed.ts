@@ -137,6 +137,10 @@ class ComputedRefImpl<T> {
       }
     }
   }
+
+  dispose() {
+    this.effect.stop();
+  }
 }
 
 export function computed<T>(
