@@ -168,6 +168,10 @@ function createGetter(isReadonly = false, shallow = false) {
 
     const res = Reflect.get(target, key, receiver)
 
+    // 数字无需处理索引访问
+    if (targetIsArray && (<any>target)["__trackIndexAccess"] === undefined && shallow && isIntegerKey(key)) {
+      return res;
+    }
     if (isSymbol(key) ? builtInSymbols.has(key) : isNonTrackableKeys(key)) {
       return res
     }
@@ -224,6 +228,9 @@ function createSetter(shallow = false) {
         ? Number(key) < target.length
         : hasOwn(target, key)
     const result = Reflect.set(target, key, value, receiver)
+    // 数字无需处理索引访问
+    if (isArray(target) && isIntegerKey(key) && (target as any)["__trackIndexAccess"] === undefined)
+      return result;
     // don't trigger if target is something up in the prototype chain of original
     if (target === toRaw(receiver)) {
       if (!hadKey) {
