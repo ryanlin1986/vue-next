@@ -115,7 +115,7 @@ class ComputedRefImpl<T> {
 
 
   subscribe(changed: Function, context: any) {
-    this.value;
+    (this.value as any)?.toString();
     if (context)
       changed = changed.bind(context);
     if (!this._subscriptions) {
