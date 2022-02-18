@@ -23,21 +23,25 @@ export interface WritableComputedOptions<T> {
   set: ComputedSetter<T>
 }
 
-class ComputedRefImpl<T> {
+export class ComputedRefImpl<T> {
   public dep?: Dep = undefined
 
   private _value!: T
-  private _dirty = true
   private _subscriptions: Array<Function> | Function = <any>undefined
+
   public readonly effect: ReactiveEffect<T>
 
   public readonly __v_isRef = true
   public readonly [ReactiveFlags.IS_READONLY]: boolean
 
+  public _dirty = true
+  public _cacheable: boolean
+
   constructor(
     getter: ComputedGetter<T>,
     private readonly _setter: ComputedSetter<T>,
-    isReadonly: boolean
+    isReadonly: boolean,
+    isSSR: boolean
   ) {
     this.effect = new ReactiveEffect(getter, () => {
       if (!this._dirty) {
@@ -59,6 +63,8 @@ class ComputedRefImpl<T> {
         }
       }
     })
+    this.effect.computed = this
+    this.effect.active = this._cacheable = !isSSR
     this[ReactiveFlags.IS_READONLY] = isReadonly
   }
 
@@ -66,7 +72,7 @@ class ComputedRefImpl<T> {
     // the computed ref may get wrapped by other proxies e.g. readonly() #3376
     const self = toRaw(this)
     trackRefValue(self)
-    if (self._dirty) {
+    if (self._dirty || !self._cacheable) {
       self._dirty = false
       let value = self.effect.run()!;
       if (value instanceof Promise) {
@@ -153,7 +159,8 @@ export function computed<T>(
 ): WritableComputedRef<T>
 export function computed<T>(
   getterOrOptions: ComputedGetter<T> | WritableComputedOptions<T>,
-  debugOptions?: DebuggerOptions
+  debugOptions?: DebuggerOptions,
+  isSSR = false
 ) {
   let getter: ComputedGetter<T>
   let setter: ComputedSetter<T>
@@ -171,9 +178,9 @@ export function computed<T>(
     setter = getterOrOptions.set
   }
 
-  const cRef = new ComputedRefImpl(getter, setter, onlyGetter || !setter)
+  const cRef = new ComputedRefImpl(getter, setter, onlyGetter || !setter, isSSR)
 
-  if (__DEV__ && debugOptions) {
+  if (__DEV__ && debugOptions && !isSSR) {
     cRef.effect.onTrack = debugOptions.onTrack
     cRef.effect.onTrigger = debugOptions.onTrigger
   }

@@ -5,7 +5,6 @@ export {
   pauseTracking,
   resetTracking,
   // core
-  computed,
   reactive,
   ref,
   readonly,
@@ -18,6 +17,7 @@ export {
   isProxy,
   isReactive,
   isReadonly,
+  isShallow,
   // advanced
   customRef,
   triggerRef,
@@ -36,6 +36,7 @@ export {
   getCurrentScope,
   onScopeDispose
 } from '@vue/reactivity'
+export { computed } from './apiComputed'
 export {
   watch,
   watchEffect,
