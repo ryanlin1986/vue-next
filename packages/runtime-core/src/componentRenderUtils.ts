@@ -425,7 +425,7 @@ function hasStyleChanged(nextVal: any, prevVal: any) {
         return true;
     }
   }
-  return nextVal !== prevVal;
+  return false;
 }
 
 export function updateHOCHostEl(
