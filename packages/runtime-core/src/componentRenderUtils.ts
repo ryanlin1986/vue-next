@@ -93,18 +93,18 @@ export function renderComponentRoot(
       result = normalizeVNode(
         render.length > 1
           ? render(
-              props,
-              __DEV__
-                ? {
-                    get attrs() {
-                      markAttrsAccessed()
-                      return attrs
-                    },
-                    slots,
-                    emit
-                  }
-                : { attrs, slots, emit }
-            )
+            props,
+            __DEV__
+              ? {
+                get attrs() {
+                  markAttrsAccessed()
+                  return attrs
+                },
+                slots,
+                emit
+              }
+              : { attrs, slots, emit }
+          )
           : render(props, null as any /* we know it doesn't need it */)
       )
       fallthroughAttrs = Component.props
@@ -166,19 +166,19 @@ export function renderComponentRoot(
         if (extraAttrs.length) {
           warn(
             `Extraneous non-props attributes (` +
-              `${extraAttrs.join(', ')}) ` +
-              `were passed to component but could not be automatically inherited ` +
-              `because component renders fragment or text root nodes.`
+            `${extraAttrs.join(', ')}) ` +
+            `were passed to component but could not be automatically inherited ` +
+            `because component renders fragment or text root nodes.`
           )
         }
         if (eventAttrs.length) {
           warn(
             `Extraneous non-emits event listeners (` +
-              `${eventAttrs.join(', ')}) ` +
-              `were passed to component but could not be automatically inherited ` +
-              `because component renders fragment or text root nodes. ` +
-              `If the listener is intended to be a component custom event listener only, ` +
-              `declare it using the "emits" option.`
+            `${eventAttrs.join(', ')}) ` +
+            `were passed to component but could not be automatically inherited ` +
+            `because component renders fragment or text root nodes. ` +
+            `If the listener is intended to be a component custom event listener only, ` +
+            `declare it using the "emits" option.`
           )
         }
       }
@@ -212,7 +212,7 @@ export function renderComponentRoot(
     if (__DEV__ && !isElementRoot(root)) {
       warn(
         `Runtime directive used on component with non-element root node. ` +
-          `The directives will not function as intended.`
+        `The directives will not function as intended.`
       )
     }
     root.dirs = root.dirs ? root.dirs.concat(vnode.dirs) : vnode.dirs
@@ -222,7 +222,7 @@ export function renderComponentRoot(
     if (__DEV__ && !isElementRoot(root)) {
       warn(
         `Component inside <Transition> renders non-element root node ` +
-          `that cannot be animated.`
+        `that cannot be animated.`
       )
     }
     root.transition = vnode.transition
@@ -295,7 +295,7 @@ const getFunctionalFallthrough = (attrs: Data): Data | undefined => {
   let res: Data | undefined
   for (const key in attrs) {
     if (key === 'class' || key === 'style' || isOn(key)) {
-      ;(res || (res = {}))[key] = attrs[key]
+      ; (res || (res = {}))[key] = attrs[key]
     }
   }
   return res
@@ -401,10 +401,28 @@ function hasPropsChanged(
       nextProps[key] !== prevProps[key] &&
       !isEmitListener(emitsOptions, key)
     ) {
+      if (key === "style" && !hasStyleChanged(nextProps[key], prevProps[key])) {
+        continue;
+      }
       return true
     }
   }
   return false
+}
+
+function hasStyleChanged(nextVal: any, prevVal: any) {
+  if (nextVal && prevVal) {
+    let nextValKeys = Object.keys(nextVal);
+    let prevValKeys = Object.keys(prevVal);
+    if (nextValKeys.length != prevValKeys.length)
+      return true;
+    for (let i = 0; i < nextValKeys.length; i++) {
+      let key = nextValKeys[i];
+      if (nextVal[key] !== prevVal[key])
+        return true;
+    }
+  }
+  return nextVal !== prevVal;
 }
 
 export function updateHOCHostEl(
@@ -412,7 +430,7 @@ export function updateHOCHostEl(
   el: typeof vnode.el // HostNode
 ) {
   while (parent && parent.subTree === vnode) {
-    ;(vnode = parent.vnode).el = el
+    ; (vnode = parent.vnode).el = el
     parent = parent.parent
   }
 }
