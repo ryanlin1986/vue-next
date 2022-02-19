@@ -695,7 +695,7 @@ function baseCreateRenderer(
       // scopeId
       setScopeId(el, vnode, vnode.scopeId, slotScopeIds, parentComponent)
     }
-    if (true || __DEV__ || __FEATURE_PROD_DEVTOOLS__) {
+    if (__DEV__ || __FEATURE_PROD_DEVTOOLS__) {
       Object.defineProperty(el, '__vnode', {
         value: vnode,
         enumerable: false
