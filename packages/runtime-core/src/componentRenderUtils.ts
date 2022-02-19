@@ -359,6 +359,9 @@ export function shouldUpdateComponent(
           nextProps![key] !== prevProps![key] &&
           !isEmitListener(emits, key)
         ) {
+          if (key === "style" && !hasStyleChanged(<any>nextProps![key], <any>prevProps![key])) {
+            continue;
+          }
           return true
         }
       }
