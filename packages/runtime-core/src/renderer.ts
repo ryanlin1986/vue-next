@@ -695,7 +695,7 @@ function baseCreateRenderer(
       // scopeId
       setScopeId(el, vnode, vnode.scopeId, slotScopeIds, parentComponent)
     }
-    if (true || __DEV__ || __FEATURE_PROD_DEVTOOLS__) {
+    if (__DEV__ || __FEATURE_PROD_DEVTOOLS__) {
       Object.defineProperty(el, '__vnode', {
         value: vnode,
         enumerable: false
@@ -704,6 +704,16 @@ function baseCreateRenderer(
         value: parentComponent,
         enumerable: false
       })
+    }
+    else {
+      // 只有循环项需要
+      if (vnode.forItem) {
+        el["__vnode"] = vnode;
+      }
+      // 只有根节点需要
+      if (parentComponent!.subTree === vnode) {
+        el["__vueParentComponent"] = parentComponent;
+      }
     }
     if (dirs) {
       invokeDirectiveHook(vnode, null, parentComponent, 'beforeMount')
@@ -812,18 +822,18 @@ function baseCreateRenderer(
     // #1426 take the old vnode's patch flag into account since user may clone a
     // compiler-generated vnode, which de-opts to FULL_PROPS
     patchFlag |= n1.patchFlag & PatchFlags.FULL_PROPS
-    const oldProps = n1.props || EMPTY_OBJ
-    const newProps = n2.props || EMPTY_OBJ
     let vnodeHook: VNodeHook | undefined | null
 
     // disable recurse in beforeUpdate hooks
     parentComponent && toggleRecurse(parentComponent, false)
-    if ((vnodeHook = newProps.onVnodeBeforeUpdate)) {
+    if ((vnodeHook = n2.props?.onVnodeBeforeUpdate)) {
       invokeVNodeHook(vnodeHook, parentComponent, n2, n1)
     }
     if (dirs) {
       invokeDirectiveHook(n2, n1, parentComponent, 'beforeUpdate')
     }
+    const oldProps = n1.props || EMPTY_OBJ
+    const newProps = n2.props || EMPTY_OBJ
     if((<any>n2)["nd"]){
         patchFlag = 16;
     }
