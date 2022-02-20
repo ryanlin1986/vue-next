@@ -711,7 +711,7 @@ function baseCreateRenderer(
         el["__vnode"] = vnode;
       }
       // 只有根节点需要
-      if (parentComponent!.subTree === vnode) {
+      if (parentComponent!.subTree === vnode || (parentComponent!.subTree?.children as any)?.includes(vnode)) {
         el["__vueParentComponent"] = parentComponent;
       }
     }
