@@ -164,7 +164,7 @@ export interface VNode<
   // DOM
   el: HostNode | null
   anchor: HostNode | null // fragment anchor
-  forItem: any;
+  forItem?: any;
   target: HostElement | null // teleport target
   targetAnchor: HostNode | null // teleport target anchor
   /**
@@ -647,9 +647,10 @@ export function cloneVNode<T, U>(
     ssContent: vnode.ssContent && cloneVNode(vnode.ssContent),
     ssFallback: vnode.ssFallback && cloneVNode(vnode.ssFallback),
     el: vnode.el,
-    anchor: vnode.anchor,
-    forItem: vnode.forItem
+    anchor: vnode.anchor
   }
+  if(vnode.forItem)
+    cloned.forItem = vnode.forItem;
   if (__COMPAT__) {
     defineLegacyVNodeProperties(cloned)
   }
