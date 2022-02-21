@@ -707,7 +707,10 @@ export function handleSetupResult(
     if (__DEV__ || __FEATURE_PROD_DEVTOOLS__) {
       instance.devtoolsRawSetupState = setupResult
     }
-    instance.setupState = proxyRefs(setupResult)
+    if(!setupResult["__ignoreProxy"])
+      instance.setupState = proxyRefs(setupResult)
+    else
+      instance.setupState = setupResult
     if (__DEV__) {
       exposeSetupStateOnRenderContext(instance)
     }
