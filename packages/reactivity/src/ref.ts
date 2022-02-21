@@ -163,18 +163,11 @@ export function unref<T>(ref: T | Ref<T>): T {
   return isRef(ref) ? (ref.value as any) : ref
 }
 
-function isNativeClass(thing: any) {
-  return thing.hasOwnProperty('prototype') && !thing.hasOwnProperty('arguments')
-}
-
 const shallowUnwrapHandlers: ProxyHandler<any> = {
   get: (target, key, receiver) => {
     let result = Reflect.get(target, key, receiver);
     if (result && !target["__v_skip"]) {
       return unref(result);
-    }
-    if (typeof result === "function" && !isNativeClass(result)) {
-      return result.bind(target);
     }
     if (result === undefined) {
       return target[key];

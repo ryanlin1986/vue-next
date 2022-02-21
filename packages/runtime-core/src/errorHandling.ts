@@ -67,7 +67,10 @@ export function callWithErrorHandling(
 ) {
   let res
   try {
-    res = args ? fn(...args) : fn()
+    if(instance)
+      res = args ? fn.apply(instance.setupState,args) : fn.call(instance)
+    else
+      res = args ? fn(...args) : fn()
   } catch (err) {
     handleError(err, instance, type)
   }
