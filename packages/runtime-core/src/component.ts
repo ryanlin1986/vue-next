@@ -257,7 +257,7 @@ export interface ComponentInternalInstance {
    * cache for proxy access type to avoid hasOwnProperty calls
    * @internal
    */
-  accessCache: Data | null
+  accessCache?: Data | null
   /**
    * cache for render function values that rely on _ctx but won't need updates
    * after initialized (e.g. inline handlers)
@@ -307,7 +307,7 @@ export interface ComponentInternalInstance {
   // the rest are only for stateful components ---------------------------------
 
   // main proxy that serves as the public instance (`this`)
-  proxy: ComponentPublicInstance | null
+  proxy?: ComponentPublicInstance | null
 
   // exposed properties via expose()
   exposed: Record<string, any> | null
@@ -709,8 +709,11 @@ export function handleSetupResult(
     }
     if(!setupResult["__ignoreProxy"])
       instance.setupState = proxyRefs(setupResult)
-    else
+    else{
       instance.setupState = setupResult
+      delete instance.accessCache
+      delete instance.proxy
+    }
     if (__DEV__) {
       exposeSetupStateOnRenderContext(instance)
     }
