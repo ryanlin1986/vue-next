@@ -41,6 +41,7 @@ const builtInSymbols = new Set(
 
 const get = /*#__PURE__*/ createGetter()
 const shallowGet = /*#__PURE__*/ createGetter(false, true)
+const observableArrayGet = /*#__PURE__*/ createObservableArrayGetter()
 const readonlyGet = /*#__PURE__*/ createGetter(true)
 const shallowReadonlyGet = /*#__PURE__*/ createGetter(true, true)
 
@@ -204,6 +205,37 @@ function createGetter(isReadonly = false, shallow = false) {
   }
 }
 
+function createObservableArrayGetter() {
+  return function get(target: Target, key: string | symbol, receiver: object) {
+    if (key === ReactiveFlags.IS_REACTIVE) {
+      return true
+    } else if (key === ReactiveFlags.IS_READONLY) {
+      return false
+    } else if (key === ReactiveFlags.IS_SHALLOW) {
+      return true
+    } else if (
+      key === ReactiveFlags.RAW
+    ) {
+      return target;
+    }
+
+    if (hasOwn(arrayInstrumentations, key)) {
+      return Reflect.get(arrayInstrumentations, key, receiver)
+    }
+
+    const res = Reflect.get(target, key, receiver)
+
+    // 数字无需处理索引访问
+    if ((<any>target)["__trackIndexAccess"] === undefined && isIntegerKey(key)) {
+      return res;
+    }
+    if (isSymbol(key) ? builtInSymbols.has(key) : isNonTrackableKeys(key)) {
+      return res
+    }
+    track(target, TrackOpTypes.GET, key)
+    return res
+  }
+}
 const set = /*#__PURE__*/ createSetter()
 const shallowSet = /*#__PURE__*/ createSetter(true)
 
@@ -309,6 +341,15 @@ export const shallowReactiveHandlers = /*#__PURE__*/ extend(
   mutableHandlers,
   {
     get: shallowGet,
+    set: shallowSet
+  }
+)
+
+export const observableArrayHandlers = /*#__PURE__*/ extend(
+  {},
+  mutableHandlers,
+  {
+    get: observableArrayGet,
     set: shallowSet
   }
 )

@@ -23,6 +23,7 @@ export {
   triggerRef,
   shallowRef,
   shallowReactive,
+  observableArray,
   shallowReadonly,
   markRaw,
   toRaw,
