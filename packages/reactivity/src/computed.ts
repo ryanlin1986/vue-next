@@ -145,6 +145,7 @@ export class ComputedRefImpl<T> {
   }
 
   dispose() {
+    this._subscriptions = <any>null;
     this.effect.stop();
   }
 }
