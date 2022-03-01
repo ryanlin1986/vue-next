@@ -1,5 +1,6 @@
 export {
   ref,
+  observable,
   shallowRef,
   isRef,
   toRef,

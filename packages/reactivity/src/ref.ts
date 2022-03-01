@@ -93,6 +93,14 @@ function createRef(rawValue: unknown, shallow: boolean) {
   return new RefImpl(rawValue, shallow)
 }
 
+export function observable(value?: unknown) {
+  return createObservable(value)
+}
+
+function createObservable(rawValue: unknown) {
+  return new RefImpl(rawValue, true)
+}
+
 class RefImpl<T> {
   private _value: T
   private _rawValue: T

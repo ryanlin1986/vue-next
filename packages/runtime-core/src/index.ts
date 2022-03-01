@@ -21,6 +21,7 @@ export {
   // advanced
   customRef,
   triggerRef,
+  observable,
   shallowRef,
   shallowReactive,
   observableArray,
