@@ -305,14 +305,14 @@ function createMinifiedConfig(format) {
       format: outputConfigs[format].format
     },
     [
-      // terser({
-      //   module: /^esm/.test(format),
-      //   compress: {
-      //     ecma: 2015,
-      //     pure_getters: true
-      //   },
-      //   safari10: true
-      // })
+      terser({
+        module: /^esm/.test(format),
+        compress: {
+          ecma: 2015,
+          pure_getters: true
+        },
+        safari10: true
+      })
     ]
   )
 }

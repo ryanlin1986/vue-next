@@ -70,7 +70,7 @@ export function renderComponentRoot(
     if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
       // withProxy is a proxy with a different `has` trap only for
       // runtime-compiled render functions using `with` block.
-      const proxyToUse = setupState["__ignoreProxy"] ? setupState: withProxy || proxy
+      const proxyToUse = (instance.type as any)["reactiveSetupState"] === false ? setupState: withProxy || proxy
       result = normalizeVNode(
         render!.call(
           proxyToUse,

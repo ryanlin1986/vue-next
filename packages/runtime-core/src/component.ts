@@ -707,7 +707,7 @@ export function handleSetupResult(
     if (__DEV__ || __FEATURE_PROD_DEVTOOLS__) {
       instance.devtoolsRawSetupState = setupResult
     }
-    if(!setupResult["__ignoreProxy"])
+    if((instance.type as any)["reactiveSetupState"] !== false)
       instance.setupState = proxyRefs(setupResult)
     else{
       instance.setupState = setupResult
