@@ -627,10 +627,12 @@ function setupStatefulComponent(
     }
   }
   // 0. create render proxy property access cache
-  instance.accessCache = Object.create(null)
   // 1. create public instance / render proxy
   // also mark it raw so it's never observed
-  instance.proxy = markRaw(new Proxy(instance.ctx, RuntimeCompiledPublicInstanceProxyHandlers))
+  if((instance.type as any)["reactiveSetupState"]!==false){
+    instance.accessCache = Object.create(null)
+    instance.proxy = markRaw(new Proxy(instance.ctx, RuntimeCompiledPublicInstanceProxyHandlers))
+  }
   if (__DEV__) {
     exposePropsOnRenderContext(instance)
   }
@@ -711,8 +713,6 @@ export function handleSetupResult(
       instance.setupState = proxyRefs(setupResult)
     else{
       instance.setupState = setupResult
-      delete instance.accessCache
-      delete instance.proxy
     }
     if (__DEV__) {
       exposeSetupStateOnRenderContext(instance)
