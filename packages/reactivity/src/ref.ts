@@ -104,7 +104,7 @@ function createObservable(rawValue: unknown) {
 class RefImpl<T> {
   private _value: T
   private _rawValue: T
-  private _subscriptions: Array<Function> | Function = <any>undefined
+  private _subscriptions: Set<Function> | Function = <any>undefined
 
   public dep?: Dep = undefined
   public readonly __v_isRef = true
@@ -127,14 +127,15 @@ class RefImpl<T> {
       this._value = this.__v_isShallow ? newVal : toReactive(newVal)
       triggerRefValue(this, newVal)
       if (this._subscriptions) {
-        if (this._subscriptions instanceof Array) {
-          for (let i = 0; i < this._subscriptions.length; i++) {
-            this._subscriptions[i](newVal, oldVal);
+        if (this._subscriptions instanceof Set) {
+          let items = Array.from(this._subscriptions);
+          for (let i = 0; i < items.length; i++) {
+              items[i](newVal, oldVal);
           }
-        }
-        else {
+      }
+      else {
           this._subscriptions(newVal, oldVal);
-        }
+      }
       }
     }
   }
@@ -146,20 +147,20 @@ class RefImpl<T> {
       this.value;
       this._subscriptions = changed;
     }
-    else if (this._subscriptions instanceof Array) {
-      this._subscriptions.push(changed);
+    else if (this._subscriptions instanceof Set) {
+        this._subscriptions.add(changed);
     }
     else {
-      this._subscriptions = [this._subscriptions, changed];
+        this._subscriptions = new Set([this._subscriptions, changed]);
     }
     return {
-      dispose: () => {
-        if (this._subscriptions === changed)
-          this._subscriptions = <any>null;
-        else if (this._subscriptions instanceof Array)
-          this._subscriptions.splice(this._subscriptions.indexOf(changed), 1);
-      }
-    }
+        dispose: () => {
+            if (this._subscriptions === changed)
+                this._subscriptions = <any>null;
+            else if (this._subscriptions instanceof Set)
+                this._subscriptions.delete(changed);
+        }
+    };
   }
 }
 

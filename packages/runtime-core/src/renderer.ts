@@ -1329,6 +1329,9 @@ function baseCreateRenderer(
         if (bm) {
           invokeArrayFns(bm)
         }
+        if(instance.setupState["beforeMount"]){
+          (instance.setupState as any).beforeMount();
+        }
         // onVnodeBeforeMount
         if (
           !isAsyncWrapperVNode &&
@@ -1409,6 +1412,13 @@ function baseCreateRenderer(
         if (m) {
           queuePostRenderEffect(m, parentSuspense)
         }
+        if(instance.setupState["mounted"])
+          queuePostRenderEffect(()=>{
+            pauseTracking();
+            (instance.setupState as any).mounted()
+            resetTracking();
+          },parentSuspense);
+    
         // onVnodeMounted
         if (
           !isAsyncWrapperVNode &&
@@ -1477,6 +1487,9 @@ function baseCreateRenderer(
         if (bu) {
           invokeArrayFns(bu)
         }
+        if(instance.setupState["beforeUpdate"]) {
+          (instance.setupState as any).beforeUpdate();
+        }
         // onVnodeBeforeUpdate
         if ((vnodeHook = next.props && next.props.onVnodeBeforeUpdate)) {
           invokeVNodeHook(vnodeHook, parent, next, vnode)
@@ -1527,6 +1540,13 @@ function baseCreateRenderer(
         // updated hook
         if (u) {
           queuePostRenderEffect(u, parentSuspense)
+        }
+        if(instance.setupState["updated"]){
+          queuePostRenderEffect(()=>{
+            pauseTracking();
+            (instance.setupState as any)["updated"]();
+            resetTracking();
+          }, parentSuspense)  
         }
         // onVnodeUpdated
         if ((vnodeHook = next.props && next.props.onVnodeUpdated)) {
@@ -2233,7 +2253,9 @@ function baseCreateRenderer(
     if (bum) {
       invokeArrayFns(bum)
     }
-
+    if(instance.setupState["dispose"]){
+      (instance.setupState as any)["dispose"]();
+    }
     if (
       __COMPAT__ &&
       isCompatEnabled(DeprecationTypes.INSTANCE_EVENT_HOOKS, instance)

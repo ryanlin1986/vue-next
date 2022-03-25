@@ -112,6 +112,8 @@ export function defineAsyncComponent<
   }
 
   return defineComponent({
+    reactiveSetupState: false,
+    reactiveProps: false,
     name: 'AsyncComponentWrapper',
 
     __asyncLoader: load,
