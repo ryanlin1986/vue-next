@@ -104,7 +104,7 @@ function createObservable(rawValue: unknown) {
 class RefImpl<T> {
   private _value: T
   private _rawValue: T
-  private _subscriptions: Set<Function> | Function = <any>undefined
+  private _subscriptions: any
 
   public dep?: Dep = undefined
   public readonly __v_isRef = true
@@ -130,37 +130,41 @@ class RefImpl<T> {
         if (this._subscriptions instanceof Set) {
           let items = Array.from(this._subscriptions);
           for (let i = 0; i < items.length; i++) {
-              items[i](newVal, oldVal);
+            let item=items[i];
+            if(typeof item==="function")
+              item(newVal, oldVal);
+            else
+              item.changed.call(item.context,newVal, oldVal);
+            }
+        }
+        else {
+          if(typeof this._subscriptions==="function")
+            this._subscriptions(newVal, oldVal);
+          else
+            this._subscriptions.changed.call(this._subscriptions.context,newVal,oldVal);
           }
-      }
-      else {
-          this._subscriptions(newVal, oldVal);
-      }
       }
     }
   }
 
   subscribe(changed: Function, context: any) {
-    if (context)
-      changed = changed.bind(context);
+    if (context) {
+      changed = <any>{
+        changed: changed,
+        context: context
+      };
+    }
     if (!this._subscriptions) {
       this.value;
       this._subscriptions = changed;
     }
     else if (this._subscriptions instanceof Set) {
-        this._subscriptions.add(changed);
+      this._subscriptions.add(changed);
     }
     else {
-        this._subscriptions = new Set([this._subscriptions, changed]);
+      this._subscriptions = new Set([this._subscriptions, changed]);
     }
-    return {
-        dispose: () => {
-            if (this._subscriptions === changed)
-                this._subscriptions = <any>null;
-            else if (this._subscriptions instanceof Set)
-                this._subscriptions.delete(changed);
-        }
-    };
+    return new RefDisposal(this, changed);
   }
 }
 
@@ -255,7 +259,7 @@ export function toRefs<T extends object>(object: T): ToRefs<T> {
 }
 
 class ObjectRefImpl<T extends object, K extends keyof T> {
-  private _subscriptions: Array<Function> | Function = <any>undefined
+  private _subscriptions: Set<Function> | Function = <any>undefined
   public readonly __v_isRef = true
 
   constructor(
@@ -270,16 +274,17 @@ class ObjectRefImpl<T extends object, K extends keyof T> {
   }
 
   set value(newVal) {
-    let oldValue = this.value;
+    let oldVal = this.value;
     this._object[this._key] = newVal;
     if (this._subscriptions) {
-      if (this._subscriptions instanceof Array) {
-        for (let i = 0; i < this._subscriptions.length; i++) {
-          this._subscriptions[i](newVal, oldValue);
+      if (this._subscriptions instanceof Set) {
+        let items = Array.from(this._subscriptions);
+        for (let i = 0; i < items.length; i++) {
+          items[i](newVal, oldVal);
         }
       }
       else {
-        this._subscriptions(newVal, oldValue);
+        this._subscriptions(newVal, oldVal);
       }
     }
   }
@@ -291,20 +296,26 @@ class ObjectRefImpl<T extends object, K extends keyof T> {
       this.value;
       this._subscriptions = changed;
     }
-    else if (this._subscriptions instanceof Array) {
-      this._subscriptions.push(changed);
+    else if (this._subscriptions instanceof Set) {
+      this._subscriptions.add(changed);
     }
     else {
-      this._subscriptions = [this._subscriptions, changed];
+      this._subscriptions = new Set([this._subscriptions, changed]);
     }
-    return {
-      dispose: () => {
-        if (this._subscriptions === changed)
-          this._subscriptions = <any>null;
-        else if (this._subscriptions instanceof Array)
-          this._subscriptions.splice(this._subscriptions.indexOf(changed), 1);
-      }
-    }
+    return new RefDisposal(this, changed);
+  }
+}
+
+class RefDisposal {
+  constructor(public ref: any, public changed: any) {
+
+  }
+
+  dispose() {
+    if (this.ref._subscriptions === this.changed)
+      this.ref._subscriptions = <any>null;
+    else if (this.ref._subscriptions instanceof Set)
+      this.ref._subscriptions.delete(this.changed);
   }
 }
 

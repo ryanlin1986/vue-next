@@ -629,7 +629,7 @@ function setupStatefulComponent(
   // 0. create render proxy property access cache
   // 1. create public instance / render proxy
   // also mark it raw so it's never observed
-  if((instance.type as any)["reactiveSetupState"]!==false){
+  if ((instance.type as any)["reactiveSetupState"] !== false) {
     instance.accessCache = Object.create(null)
     instance.proxy = markRaw(new Proxy(instance.ctx, RuntimeCompiledPublicInstanceProxyHandlers))
   }
@@ -709,9 +709,9 @@ export function handleSetupResult(
     if (__DEV__ || __FEATURE_PROD_DEVTOOLS__) {
       instance.devtoolsRawSetupState = setupResult
     }
-    if((instance.type as any)["reactiveSetupState"] !== false)
+    if ((instance.type as any)["reactiveSetupState"] !== false)
       instance.setupState = proxyRefs(setupResult)
-    else{
+    else {
       instance.setupState = setupResult
     }
     if (__DEV__) {
@@ -879,7 +879,7 @@ function createAttrsProxy(instance: ComponentInternalInstance): Data {
 export function createSetupContext(
   instance: ComponentInternalInstance
 ): SetupContext {
-  const expose: SetupContext['expose'] = exposed => {
+  const expose: SetupContext['expose'] = (instance.type as any)["ignoreExpose"] ? <any>undefined : exposed => {
     if (__DEV__ && instance.exposed) {
       warn(`expose() should be called only once per setup().`)
     }

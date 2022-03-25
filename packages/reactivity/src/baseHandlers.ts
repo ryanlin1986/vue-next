@@ -116,23 +116,37 @@ function createArrayInstrumentations() {
         const res = (toRaw(this) as any)[key].apply(this, args)
         resetTracking()
         if (raw.arrayChangeSubscribes && changes?.length > 0) {
-          if (raw.arrayChangeSubscribes instanceof Array) {
-            for (let i = 0; i < raw.arrayChangeSubscribes.length; i++) {
-              raw.arrayChangeSubscribes[i](changes);
+          if (raw.arrayChangeSubscribes instanceof Set) {
+            let items = <any>Array.from(raw.arrayChangeSubscribes);
+            for (let i = 0; i < items.length; i++) {
+              if (typeof items[i] === "function")
+                items[i](changes);
+              else
+                items[i].handler.call(items[i].context, changes);
             }
           }
           else {
-            raw.arrayChangeSubscribes(changes);
+            if (raw.arrayChangeSubscribes === "function")
+              raw.arrayChangeSubscribes(changes);
+            else
+              raw.arrayChangeSubscribes.handler.call(raw.arrayChangeSubscribes.context, changes);
           }
         }
         if (raw.subscribes) {
-          if (raw.subscribes instanceof Array) {
-            for (let i = 0; i < raw.subscribes.length; i++) {
-              raw.subscribes[i](raw);
+          if (raw.subscribes instanceof Set) {
+            let items = <any>Array.from(raw.subscribes);
+            for (let i = 0; i < items.length; i++) {
+              if (typeof items[i] === "function")
+                items[i](raw);
+              else
+                items[i].handler.call(items[i].context, raw);
             }
           }
           else {
-            raw.subscribes(raw);
+            if (typeof raw.subscribes === "function")
+              raw.subscribes(raw);
+            else
+              raw.subscribes.handler.call(raw.subscribes.context, raw);
           }
         }
         return res

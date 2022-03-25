@@ -1330,7 +1330,9 @@ function baseCreateRenderer(
           invokeArrayFns(bm)
         }
         if(instance.setupState["beforeMount"]){
+          pauseTracking();
           (instance.setupState as any).beforeMount();
+          resetTracking();
         }
         // onVnodeBeforeMount
         if (
@@ -1488,7 +1490,9 @@ function baseCreateRenderer(
           invokeArrayFns(bu)
         }
         if(instance.setupState["beforeUpdate"]) {
+          pauseTracking();
           (instance.setupState as any).beforeUpdate();
+          resetTracking();
         }
         // onVnodeBeforeUpdate
         if ((vnodeHook = next.props && next.props.onVnodeBeforeUpdate)) {
@@ -2254,7 +2258,9 @@ function baseCreateRenderer(
       invokeArrayFns(bum)
     }
     if(instance.setupState["dispose"]){
+      pauseTracking();
       (instance.setupState as any)["dispose"]();
+      resetTracking();
     }
     if (
       __COMPAT__ &&
