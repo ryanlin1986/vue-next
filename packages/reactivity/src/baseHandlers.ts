@@ -126,7 +126,7 @@ function createArrayInstrumentations() {
             }
           }
           else {
-            if (raw.arrayChangeSubscribes === "function")
+            if (typeof raw.arrayChangeSubscribes === "function")
               raw.arrayChangeSubscribes(changes);
             else
               raw.arrayChangeSubscribes.handler.call(raw.arrayChangeSubscribes.context, changes);
