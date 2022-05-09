@@ -74,7 +74,7 @@ function createArrayInstrumentations() {
         pauseTracking()
         let raw = <any>toRaw(this);
         let changes = <any>null;
-        if (raw.arrayChangeSubscribes) {
+        if (raw.subscriptions) {
           changes = [];
 
           if (key === 'push') {
@@ -115,9 +115,9 @@ function createArrayInstrumentations() {
 
         const res = (toRaw(this) as any)[key].apply(this, args)
         resetTracking()
-        if (raw.arrayChangeSubscribes && changes?.length > 0) {
-          if (raw.arrayChangeSubscribes instanceof Set) {
-            let items = <any>Array.from(raw.arrayChangeSubscribes);
+        if (raw.subscriptions && changes?.length > 0) {
+          if (raw.subscriptions instanceof Set) {
+            let items = <any>Array.from(raw.subscriptions);
             for (let i = 0; i < items.length; i++) {
               if (typeof items[i] === "function")
                 items[i](changes);
@@ -126,27 +126,10 @@ function createArrayInstrumentations() {
             }
           }
           else {
-            if (typeof raw.arrayChangeSubscribes === "function")
-              raw.arrayChangeSubscribes(changes);
+            if (typeof raw.subscriptions === "function")
+              raw.subscriptions(changes);
             else
-              raw.arrayChangeSubscribes.handler.call(raw.arrayChangeSubscribes.context, changes);
-          }
-        }
-        if (raw.subscribes) {
-          if (raw.subscribes instanceof Set) {
-            let items = <any>Array.from(raw.subscribes);
-            for (let i = 0; i < items.length; i++) {
-              if (typeof items[i] === "function")
-                items[i](raw);
-              else
-                items[i].handler.call(items[i].context, raw);
-            }
-          }
-          else {
-            if (typeof raw.subscribes === "function")
-              raw.subscribes(raw);
-            else
-              raw.subscribes.handler.call(raw.subscribes.context, raw);
+              raw.subscriptions.handler.call(raw.subscriptions.context, changes);
           }
         }
         return res
