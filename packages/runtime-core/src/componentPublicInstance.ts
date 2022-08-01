@@ -219,7 +219,7 @@ const getPublicInstance = (
   i: ComponentInternalInstance | null
 ): ComponentPublicInstance | ComponentInternalInstance['exposed'] | null => {
   if (!i) return null
-  if (isStatefulComponent(i)) return getExposeProxy(i) || i.proxy
+  if (isStatefulComponent(i)) return getExposeProxy(i) as any|| i.proxy
   return getPublicInstance(i.parent)
 }
 
@@ -548,22 +548,23 @@ export function exposePropsOnRenderContext(
   }
 }
 
+
+function getAllFuncs(toCheck: any) {
+  const props = [];
+  let obj = toCheck;
+  do {
+    props.push(...Object.getOwnPropertyNames(obj));
+  } while (obj = Object.getPrototypeOf(obj));
+  return props;
+}
+
 // dev only
 export function exposeSetupStateOnRenderContext(
   instance: ComponentInternalInstance
 ) {
   const { ctx, setupState } = instance
-  Object.keys(toRaw(setupState)).forEach(key => {
+  getAllFuncs(toRaw(setupState)).forEach(key => {
     if (!setupState.__isScriptSetup) {
-      if (isReservedPrefix(key[0])) {
-        warn(
-          `setup() return property ${JSON.stringify(
-            key
-          )} should not start with "$" or "_" ` +
-            `which are reserved prefixes for Vue internals.`
-        )
-        return
-      }
       Object.defineProperty(ctx, key, {
         enumerable: true,
         configurable: true,
