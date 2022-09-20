@@ -89,7 +89,10 @@ function walk(
           ) {
             const props = getNodeProps(child)
             if (props) {
-              codegenNode.props = context.hoist(props)
+              // By Ryan, don't hoist if there is nd directive
+              if (codegenNode.directives?.elements?.find(f => f.elements?.includes("_directive_nd")) == null) {
+                codegenNode.props = context.hoist(props)
+              }
             }
           }
           if (codegenNode.dynamicProps) {
