@@ -4,6 +4,7 @@ export const version = __VERSION__
 export {
   pauseTracking,
   resetTracking,
+  enableTracking,
   // core
   reactive,
   ref,
