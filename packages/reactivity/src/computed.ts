@@ -50,10 +50,11 @@ export class ComputedRefImpl<T> {
         if (this._subscriptions) {
           let oldVal = this._value;
           let newValue = this.value;
-          if (oldVal != newValue) {
+          if (oldVal != newValue&& this._subscriptions) {
             if (this._subscriptions instanceof Array) {
-              for (let i = 0; i < this._subscriptions.length; i++) {
-                this._subscriptions[i](newValue, oldVal);
+              let subscriptions = this._subscriptions.slice();
+              for (let i = 0; i < subscriptions.length; i++) {
+                subscriptions[i](newValue, oldVal);
               }
             }
             else {
@@ -83,8 +84,9 @@ export class ComputedRefImpl<T> {
             triggerRefValue(this);
             if (this._subscriptions) {
               if (this._subscriptions instanceof Array) {
-                for (let i = 0; i < this._subscriptions.length; i++) {
-                  this._subscriptions[i](value, oldVal);
+                let subscriptions = this._subscriptions.slice();
+                for (let i = 0; i < subscriptions.length; i++) {
+                  subscriptions[i](value, oldVal);
                 }
               }
               else {
@@ -101,8 +103,9 @@ export class ComputedRefImpl<T> {
           triggerRefValue(this);
           if (this._subscriptions) {
             if (this._subscriptions instanceof Array) {
-              for (let i = 0; i < this._subscriptions.length; i++) {
-                this._subscriptions[i](value, oldVal);
+              let subscriptions = this._subscriptions.slice();
+              for (let i = 0; i < subscriptions.length; i++) {
+                subscriptions[i](value, oldVal);
               }
             }
             else {
