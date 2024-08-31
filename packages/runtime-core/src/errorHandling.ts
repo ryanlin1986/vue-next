@@ -73,6 +73,7 @@ export function callWithErrorHandling(
   type: ErrorTypes,
   args?: unknown[],
 ): any {
+  let res
   try {
     if (instance)
       res = args ? fn.apply(instance.setupState, args) : fn.call(instance)
@@ -80,6 +81,7 @@ export function callWithErrorHandling(
   } catch (err) {
     handleError(err, instance, type)
   }
+  return res
 }
 
 export function callWithAsyncErrorHandling(

@@ -165,7 +165,7 @@ export class ComputedRefImpl<T = any> implements Subscriber {
   }
 
   dispose(): void {
-    this.effect.stop()
+    // this.effect.stop()
   }
 }
 

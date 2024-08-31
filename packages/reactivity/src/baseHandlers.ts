@@ -107,7 +107,7 @@ class BaseReactiveHandler implements ProxyHandler<Target> {
     if (
       targetIsArray &&
       (<any>target)['__trackIndexAccess'] === undefined &&
-      shallow &&
+      isShallow &&
       isIntegerKey(key)
     ) {
       return res
@@ -258,15 +258,6 @@ export const readonlyHandlers: ProxyHandler<object> =
 
 export const shallowReactiveHandlers: MutableReactiveHandler =
   /*#__PURE__*/ new MutableReactiveHandler(true)
-
-export const observableArrayHandlers = /*#__PURE__*/ extend(
-  {},
-  mutableHandlers,
-  {
-    get: observableArrayGet,
-    set: shallowSet,
-  },
-)
 
 // Props handlers are special in the sense that it should not unwrap top-level
 // refs (in order to allow refs to be explicitly passed down), but should

@@ -1,7 +1,6 @@
 import { def, isObject, toRawType } from '@vue/shared'
 import {
   mutableHandlers,
-  observableArrayHandlers,
   readonlyHandlers,
   shallowReactiveHandlers,
   shallowReadonlyHandlers,
@@ -150,12 +149,6 @@ export function shallowReactive<T extends object>(
   )
 }
 
-export function observableArray<T extends object>(
-  target: T,
-): ShallowReactive<T> {
-  return createObservableArray(target, observableArrayHandlers)
-}
-
 type Primitive = string | number | boolean | bigint | symbol | undefined | null
 export type Builtin = Primitive | Function | Date | Error | RegExp
 export type DeepReadonly<T> = T extends Builtin
@@ -301,20 +294,6 @@ function createReactiveObject(
     targetType === TargetType.COLLECTION ? collectionHandlers : baseHandlers,
   )
   proxyMap.set(target, proxy)
-  return proxy
-}
-
-function createObservableArray(
-  target: Target,
-  baseHandlers: ProxyHandler<any>,
-) {
-  if (!isArray(target)) {
-    if (__DEV__) {
-      console.warn(`value cannot be made observable array: ${String(target)}`)
-    }
-    return target
-  }
-  const proxy = new Proxy(target, baseHandlers)
   return proxy
 }
 

@@ -47,7 +47,7 @@ import {
 import {
   type ComputedGetter,
   type WritableComputedOptions,
-  reactive,
+  shallowReactive,
 } from '@vue/reactivity'
 import type {
   ComponentObjectPropsOptions,

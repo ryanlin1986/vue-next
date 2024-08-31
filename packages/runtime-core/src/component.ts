@@ -14,7 +14,6 @@ import {
 import {
   type ComponentPublicInstance,
   type ComponentPublicInstanceConstructor,
-  PublicInstanceProxyHandlers,
   RuntimeCompiledPublicInstanceProxyHandlers,
   createDevRenderContext,
   exposePropsOnRenderContext,
@@ -269,6 +268,10 @@ export type Component<
   | ConcreteComponent<Props, RawBindings, D, C, M, E, S>
   | ComponentPublicInstanceConstructor<Props>
 
+export type { ComponentOptions }
+
+export type LifecycleHook<TFn = Function> = (TFn & SchedulerJob)[] | null
+
 // use `E extends any` to force evaluating type to fix #2362
 export type SetupContext<
   E = EmitsOptions,
@@ -428,7 +431,7 @@ export interface ComponentInternalInstance {
   // the rest are only for stateful components ---------------------------------
 
   // main proxy that serves as the public instance (`this`)
-  proxy?: ComponentPublicInstance | null
+  proxy: ComponentPublicInstance | null
 
   // exposed properties via expose()
   exposed: Record<string, any> | null
@@ -942,7 +945,7 @@ export function handleSetupResult(
     if ((instance.type as any)['reactiveSetupState'] !== false)
       instance.setupState = proxyRefs(setupResult)
     else {
-      instance.setupState = setupResult
+      instance.setupState = <any>setupResult
     }
     if (__DEV__) {
       exposeSetupStateOnRenderContext(instance)

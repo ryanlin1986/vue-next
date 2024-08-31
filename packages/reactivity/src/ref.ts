@@ -5,7 +5,7 @@ import {
   isFunction,
   isObject,
 } from '@vue/shared'
-import { Dep, getDepFromReactive } from './dep'
+import { Dep } from './dep'
 import {
   type Builtin,
   type ShallowReactiveMarker,
@@ -378,6 +378,7 @@ export function toRefs<T extends object>(object: T): ToRefs<T> {
 class ObjectRefImpl<T extends object, K extends keyof T> {
   public readonly [ReactiveFlags.IS_REF] = true
   public _value: T[K] = undefined!
+  _subscriptions: any
 
   constructor(
     private readonly _object: T,
@@ -425,15 +426,11 @@ class RefDisposal {
     public changed: any,
   ) {}
 
-  dispose() {
+  dispose(): void {
     if (this.ref._subscriptions === this.changed)
       this.ref._subscriptions = <any>null
     else if (this.ref._subscriptions instanceof Set)
       this.ref._subscriptions.delete(this.changed)
-  }
-
-  get dep(): Dep | undefined {
-    return getDepFromReactive(toRaw(this._object), this._key)
   }
 }
 

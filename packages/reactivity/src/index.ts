@@ -30,7 +30,6 @@ export {
   isProxy,
   shallowReactive,
   shallowReadonly,
-  observableArray,
   markRaw,
   toRaw,
   toReactive,
