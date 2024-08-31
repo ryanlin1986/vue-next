@@ -1,5 +1,6 @@
-import { VNode, VNodeChild, Fragment } from '../vnode'
-import { isArray, isString, isObject } from '@vue/shared'
+import type { VNode, VNodeChild } from '../vnode'
+import { isReactive, shallowReadArray, toReactive } from '@vue/reactivity'
+import { isArray, isObject, isString } from '@vue/shared'
 import { warn } from '../warning'
 
 /**
@@ -8,7 +9,7 @@ import { warn } from '../warning'
  */
 export function renderList(
   source: string,
-  renderItem: (value: string, index: number) => VNodeChild
+  renderItem: (value: string, index: number) => VNodeChild,
 ): VNodeChild[]
 
 /**
@@ -16,7 +17,7 @@ export function renderList(
  */
 export function renderList(
   source: number,
-  renderItem: (value: number, index: number) => VNodeChild
+  renderItem: (value: number, index: number) => VNodeChild,
 ): VNodeChild[]
 
 /**
@@ -24,7 +25,7 @@ export function renderList(
  */
 export function renderList<T>(
   source: T[],
-  renderItem: (value: T, index: number) => VNodeChild
+  renderItem: (value: T, index: number) => VNodeChild,
 ): VNodeChild[]
 
 /**
@@ -32,7 +33,7 @@ export function renderList<T>(
  */
 export function renderList<T>(
   source: Iterable<T>,
-  renderItem: (value: T, index: number) => VNodeChild
+  renderItem: (value: T, index: number) => VNodeChild,
 ): VNodeChild[]
 
 /**
@@ -42,9 +43,9 @@ export function renderList<T>(
   source: T,
   renderItem: <K extends keyof T>(
     value: T[K],
-    key: K,
-    index: number
-  ) => VNodeChild
+    key: string,
+    index: number,
+  ) => VNodeChild,
 ): VNodeChild[]
 
 /**
@@ -54,20 +55,25 @@ export function renderList(
   source: any,
   renderItem: (...args: any[]) => VNodeChild,
   cache?: any[],
-  index?: number
+  index?: number,
 ): VNodeChild[] {
   let ret: VNodeChild[]
   const cached = (cache && cache[index!]) as VNode[] | undefined
+  const sourceIsArray = isArray(source)
 
-  if (isArray(source) || isString(source)) {
+  if (sourceIsArray || isString(source)) {
+    const sourceIsReactiveArray = sourceIsArray && isReactive(source)
+    if (sourceIsReactiveArray) {
+      source = shallowReadArray(source)
+    }
     ret = new Array(source.length)
     for (let i = 0, l = source.length; i < l; i++) {
       let item = <any>renderItem(source[i], i, undefined, cached && cached[i])
-      ret[i] = item;
-      item.forItem = source[i];
+      ret[i] = item
+      item.forItem = source[i]
       if (item.type == Fragment) {
         for (let j = 0; j < item.children.length; j++) {
-          item.children[j].forItem = source[i];
+          item.children[j].forItem = source[i]
         }
       }
     }
@@ -82,7 +88,7 @@ export function renderList(
   } else if (isObject(source)) {
     if (source[Symbol.iterator as any]) {
       ret = Array.from(source as Iterable<any>, (item, i) =>
-        renderItem(item, i, undefined, cached && cached[i])
+        renderItem(item, i, undefined, cached && cached[i]),
       )
     } else {
       const keys = Object.keys(source)
