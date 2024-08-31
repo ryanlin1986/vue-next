@@ -250,6 +250,40 @@ class ReadonlyReactiveHandler extends BaseReactiveHandler {
   }
 }
 
+class ObservableArrayHandler extends MutableReactiveHandler {
+  constructor() {
+    super(true)
+  }
+
+  get(target: Target, key: string | symbol, receiver: object) {
+    if (key === '__v_isReactive' /* ReactiveFlags.IS_REACTIVE */) {
+      return true
+    } else if (key === '__v_isReadonly' /* ReactiveFlags.IS_READONLY */) {
+      return false
+    } else if (key === '__v_isShallow' /* ReactiveFlags.IS_SHALLOW */) {
+      return true
+    } else if (key === '__v_raw' /* ReactiveFlags.RAW */) {
+      return target
+    }
+    if (hasOwn(arrayInstrumentations, key)) {
+      return Reflect.get(arrayInstrumentations, key, receiver)
+    }
+    const res = Reflect.get(target, key, receiver)
+    // 数字无需处理索引访问
+    if (
+      (target as any)['__trackIndexAccess'] === undefined &&
+      isIntegerKey(key)
+    ) {
+      return res
+    }
+    if (isSymbol(key) ? builtInSymbols.has(key) : isNonTrackableKeys(key)) {
+      return res
+    }
+    track(target, TrackOpTypes.GET, key)
+    return res
+  }
+}
+
 export const mutableHandlers: ProxyHandler<object> =
   /*#__PURE__*/ new MutableReactiveHandler()
 
@@ -259,8 +293,22 @@ export const readonlyHandlers: ProxyHandler<object> =
 export const shallowReactiveHandlers: MutableReactiveHandler =
   /*#__PURE__*/ new MutableReactiveHandler(true)
 
+export const observableArrayHandlers: MutableReactiveHandler =
+  /*#__PURE__*/ new ObservableArrayHandler()
+
 // Props handlers are special in the sense that it should not unwrap top-level
 // refs (in order to allow refs to be explicitly passed down), but should
 // retain the reactivity of the normal readonly object.
 export const shallowReadonlyHandlers: ReadonlyReactiveHandler =
   /*#__PURE__*/ new ReadonlyReactiveHandler(true)
+
+export function observableArray(target: any): any {
+  if (!isArray(target)) {
+    {
+      console.warn(`value cannot be made observable array: ${String(target)}`)
+    }
+    return target
+  }
+  const proxy = new Proxy(target, <any>observableArrayHandlers)
+  return proxy
+}

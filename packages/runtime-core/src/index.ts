@@ -40,6 +40,7 @@ export {
   EffectScope,
   getCurrentScope,
   onScopeDispose,
+  observableArray,
 } from '@vue/reactivity'
 export { computed } from './apiComputed'
 export {

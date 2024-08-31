@@ -96,3 +96,5 @@ export {
   type WatchCallback,
   type OnCleanup,
 } from './watch'
+
+export { observableArray } from './baseHandlers'
