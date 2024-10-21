@@ -102,7 +102,7 @@ function createRef(rawValue: unknown, shallow: boolean) {
   return new RefImpl(rawValue, shallow)
 }
 
-export function observable(value?: unknown) {
+export function observable(value?: unknown): any {
   return createObservable(value)
 }
 

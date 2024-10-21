@@ -95,11 +95,6 @@ export function queueJob(job: SchedulerJob): void {
   if (!(job.flags! & SchedulerJobFlags.QUEUED)) {
     const jobId = getId(job)
     const lastJob = queue[queue.length - 1]
-    let existingJobIndex = queue.indexOf(job)
-    if (existingJobIndex !== -1) {
-      if (!isFlushing || flushIndex < existingJobIndex)
-        queue.splice(existingJobIndex, 1)
-    }
     if (
       !lastJob ||
       // fast path when the job id is larger than the tail
