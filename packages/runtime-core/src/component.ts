@@ -93,6 +93,7 @@ import type { BaseTransitionProps } from './components/BaseTransition'
 import type { DefineComponent } from './apiDefineComponent'
 import { markAsyncBoundary } from './helpers/useId'
 import { isAsyncWrapper } from './apiAsyncComponent'
+import type { RendererElement } from './renderer'
 
 export type Data = Record<string, unknown>
 
@@ -149,7 +150,7 @@ export interface ComponentCustomProps {}
  * }
  * ```
  */
-export interface GlobalDirectives extends Record<string, Directive> {}
+export interface GlobalDirectives {}
 
 /**
  * For globally defined Components
@@ -166,7 +167,7 @@ export interface GlobalDirectives extends Record<string, Directive> {}
  * }
  * ```
  */
-export interface GlobalComponents extends Record<string, Component> {
+export interface GlobalComponents {
   Teleport: DefineComponent<TeleportProps>
   Suspense: DefineComponent<SuspenseProps>
   KeepAlive: DefineComponent<KeepAliveProps>
@@ -773,7 +774,7 @@ export const unsetCurrentInstance = (): void => {
   internalSetCurrentInstance(null)
 }
 
-const isBuiltInTag = /*#__PURE__*/ makeMap('slot,component')
+const isBuiltInTag = /*@__PURE__*/ makeMap('slot,component')
 
 export function validateComponentName(
   name: string,
@@ -859,11 +860,10 @@ function setupStatefulComponent(
   // 2. call setup()
   const { setup } = Component
   if (setup) {
+    pauseTracking()
     const setupContext = (instance.setupContext =
       setup.length > 1 ? createSetupContext(instance) : null)
-
     const reset = setCurrentInstance(instance)
-    pauseTracking()
     const setupResult = callWithErrorHandling(
       setup,
       instance,
@@ -873,12 +873,16 @@ function setupStatefulComponent(
         setupContext,
       ],
     )
+    const isAsyncSetup = isPromise(setupResult)
     resetTracking()
     reset()
 
-    if (isPromise(setupResult)) {
-      // async setup, mark as async boundary for useId()
-      if (!isAsyncWrapper(instance)) markAsyncBoundary(instance)
+    if ((isAsyncSetup || instance.sp) && !isAsyncWrapper(instance)) {
+      // async setup / serverPrefetch, mark as async boundary for useId()
+      markAsyncBoundary(instance)
+    }
+
+    if (isAsyncSetup) {
       setupResult.then(unsetCurrentInstance, unsetCurrentInstance)
       if (isSSR) {
         // return the promise so server-renderer can wait on it
@@ -1010,7 +1014,7 @@ export function finishComponentSetup(
           instance.vnode.props &&
           instance.vnode.props['inline-template']) ||
         Component.template ||
-        resolveMergedOptions(instance).template
+        (__FEATURE_OPTIONS_API__ && resolveMergedOptions(instance).template)
       if (template) {
         if (__DEV__) {
           startMeasure(instance, `compile`)
@@ -1068,8 +1072,8 @@ export function finishComponentSetup(
   // warn missing template/render
   // the runtime compilation of template in SSR is done by server-render
   if (__DEV__ && !Component.render && instance.render === NOOP && !isSSR) {
-    /* istanbul ignore if */
     if (!compile && Component.template) {
+      /* v8 ignore start */
       warn(
         `Component provided template option but ` +
           `runtime compilation is not supported in this build of Vue.` +
@@ -1081,6 +1085,7 @@ export function finishComponentSetup(
                 ? ` Use "vue.global.js" instead.`
                 : ``) /* should not happen */,
       )
+      /* v8 ignore stop */
     } else {
       warn(`Component is missing template or render function: `, Component)
     }
@@ -1216,7 +1221,6 @@ export function getComponentName(
     : Component.name || (includeInferred && Component.__name)
 }
 
-/* istanbul ignore next */
 export function formatComponentName(
   instance: ComponentInternalInstance | null,
   Component: ConcreteComponent,
@@ -1271,4 +1275,8 @@ export interface ComponentCustomElementInterface {
     shouldReflect?: boolean,
     shouldUpdate?: boolean,
   ): void
+  /**
+   * @internal attached by the nested Teleport when shadowRoot is false.
+   */
+  _teleportTarget?: RendererElement
 }

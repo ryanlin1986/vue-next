@@ -25,10 +25,10 @@ import {
 import { isRef } from './ref'
 import { warn } from './warning'
 
-const isNonTrackableKeys = /*#__PURE__*/ makeMap(`__proto__,__v_isRef,__isVue`)
+const isNonTrackableKeys = /*@__PURE__*/ makeMap(`__proto__,__v_isRef,__isVue`)
 
 const builtInSymbols = new Set(
-  /*#__PURE__*/
+  /*@__PURE__*/
   Object.getOwnPropertyNames(Symbol)
     // ios10.x Object.getOwnPropertyNames(Symbol) can enumerate 'arguments' and 'caller'
     // but accessing them on Symbol leads to TypeError because Symbol is a strict mode
@@ -174,7 +174,13 @@ class MutableReactiveHandler extends BaseReactiveHandler {
       isArray(target) && isIntegerKey(key)
         ? Number(key) < target.length
         : hasOwn(target, key)
-    const result = Reflect.set(target, key, value, receiver)
+
+    const result = Reflect.set(
+      target,
+      key,
+      value,
+      isRef(target) ? target : receiver,
+    )
     // 数字无需处理索引访问
     if (
       isArray(target) &&
@@ -182,6 +188,7 @@ class MutableReactiveHandler extends BaseReactiveHandler {
       (target as any)['__trackIndexAccess'] === undefined
     )
       return result
+
     // don't trigger if target is something up in the prototype chain of original
     if (target === toRaw(receiver)) {
       if (!hadKey) {
@@ -296,13 +303,13 @@ class ObservableArrayHandler extends MutableReactiveHandler {
 }
 
 export const mutableHandlers: ProxyHandler<object> =
-  /*#__PURE__*/ new MutableReactiveHandler()
+  /*@__PURE__*/ new MutableReactiveHandler()
 
 export const readonlyHandlers: ProxyHandler<object> =
-  /*#__PURE__*/ new ReadonlyReactiveHandler()
+  /*@__PURE__*/ new ReadonlyReactiveHandler()
 
 export const shallowReactiveHandlers: MutableReactiveHandler =
-  /*#__PURE__*/ new MutableReactiveHandler(true)
+  /*@__PURE__*/ new MutableReactiveHandler(true)
 
 export const observableArrayHandlers: MutableReactiveHandler =
   /*#__PURE__*/ new ObservableArrayHandler()
@@ -311,7 +318,7 @@ export const observableArrayHandlers: MutableReactiveHandler =
 // refs (in order to allow refs to be explicitly passed down), but should
 // retain the reactivity of the normal readonly object.
 export const shallowReadonlyHandlers: ReadonlyReactiveHandler =
-  /*#__PURE__*/ new ReadonlyReactiveHandler(true)
+  /*@__PURE__*/ new ReadonlyReactiveHandler(true)
 
 export function observableArray(target: any): any {
   if (!isArray(target)) {
