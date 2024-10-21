@@ -129,6 +129,19 @@ export class ComputedRefImpl<T = any> implements Subscriber {
     }
   }
 
+  notifySubscriptions(): void {
+    if (this._subscriptions) {
+      if (this._subscriptions instanceof Array) {
+        for (let i = 0; i < this._subscriptions.length; i++) {
+          let sub = this._subscriptions[i]
+          sub()
+        }
+      } else {
+        this._subscriptions()
+      }
+    }
+  }
+
   get value(): T {
     const link = __DEV__
       ? this.dep.track({
