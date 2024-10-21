@@ -141,7 +141,7 @@ export const toHandlerKey: <T extends string>(
 
 // compare whether a value has changed, accounting for NaN.
 export const hasChanged = (value: any, oldValue: any): boolean =>
-  !Object.is(value, oldValue)
+  !Object.is(value, oldValue) && !(value == null && oldValue == null)
 
 export const invokeArrayFns = (fns: Function[], ...arg: any[]): void => {
   for (let i = 0; i < fns.length; i++) {

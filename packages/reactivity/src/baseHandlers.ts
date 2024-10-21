@@ -256,13 +256,13 @@ class ObservableArrayHandler extends MutableReactiveHandler {
   }
 
   get(target: Target, key: string | symbol, receiver: object) {
-    if (key === '__v_isReactive' /* ReactiveFlags.IS_REACTIVE */) {
+    if (key === ReactiveFlags.IS_REACTIVE) {
       return true
-    } else if (key === '__v_isReadonly' /* ReactiveFlags.IS_READONLY */) {
+    } else if (key === ReactiveFlags.IS_READONLY) {
       return false
-    } else if (key === '__v_isShallow' /* ReactiveFlags.IS_SHALLOW */) {
+    } else if (key === ReactiveFlags.IS_SHALLOW) {
       return true
-    } else if (key === '__v_raw' /* ReactiveFlags.RAW */) {
+    } else if (key === ReactiveFlags.RAW) {
       return target
     }
     if (hasOwn(arrayInstrumentations, key)) {
@@ -271,8 +271,8 @@ class ObservableArrayHandler extends MutableReactiveHandler {
     const res = Reflect.get(target, key, receiver)
     // 数字无需处理索引访问
     if (
-      (target as any)['__trackIndexAccess'] === undefined &&
-      isIntegerKey(key)
+      key === 'subscriptions' ||
+      ((target as any)['__trackIndexAccess'] === undefined && isIntegerKey(key))
     ) {
       return res
     }
@@ -281,6 +281,17 @@ class ObservableArrayHandler extends MutableReactiveHandler {
     }
     track(target, TrackOpTypes.GET, key)
     return res
+  }
+
+  set(
+    target: Record<string | symbol, unknown>,
+    key: string | symbol,
+    value: unknown,
+    receiver: object,
+  ): boolean {
+    if (key === ' subscriptions')
+      return Reflect.set(target, key, value, receiver)
+    return super.set(target, key, value, receiver)
   }
 }
 

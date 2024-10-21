@@ -124,7 +124,33 @@ export const arrayInstrumentations: Record<string | symbol, Function> = <any>{
   },
 
   push(...args: unknown[]) {
-    return noTracking(this, 'push', args)
+    let changes: any
+    let raw = toRaw(this)
+    if (raw.subscriptions) {
+      changes = []
+      for (let i = 0; i < args.length; i++) {
+        changes.push({
+          status: 'added',
+          index: raw.length + i,
+          value: args[i],
+        })
+      }
+    }
+    let result = noTracking(this, 'push', args)
+    if (raw.subscriptions && changes != null && changes.length > 0) {
+      if (raw.subscriptions instanceof Set) {
+        let items = Array.from(raw.subscriptions)
+        for (let i = 0; i < items.length; i++) {
+          let item: any = items[i]
+          if (typeof item === 'function') item(changes)
+          else item.handler.call(item.context, changes)
+        }
+      } else {
+        if (typeof raw.subscriptions === 'function') raw.subscriptions(changes)
+        else raw.subscriptions.handler.call(raw.subscriptions.context, changes)
+      }
+    }
+    return result
   },
 
   reduce(
@@ -152,7 +178,31 @@ export const arrayInstrumentations: Record<string | symbol, Function> = <any>{
   },
 
   shift() {
-    return noTracking(this, 'shift')
+    let changes: any
+    let raw = toRaw(this)
+    if (raw.subscriptions) {
+      changes = []
+      changes.push({
+        status: 'deleted',
+        index: 0,
+        value: raw[0],
+      })
+    }
+    let result = noTracking(this, 'shift')
+    if (raw.subscriptions && changes != null && changes.length > 0) {
+      if (raw.subscriptions instanceof Set) {
+        let items = Array.from(raw.subscriptions)
+        for (let i = 0; i < items.length; i++) {
+          let item: any = items[i]
+          if (typeof item === 'function') item(changes)
+          else item.handler.call(item.context, changes)
+        }
+      } else {
+        if (typeof raw.subscriptions === 'function') raw.subscriptions(changes)
+        else raw.subscriptions.handler.call(raw.subscriptions.context, changes)
+      }
+    }
+    return result
   },
 
   // slice could use ARRAY_ITERATE but also seems to beg for range tracking
@@ -165,7 +215,44 @@ export const arrayInstrumentations: Record<string | symbol, Function> = <any>{
   },
 
   splice(...args: unknown[]) {
-    return noTracking(this, 'splice', args)
+    let changes: any
+    let raw = toRaw(this)
+    if (raw.subscriptions) {
+      changes = []
+      let startIndex = <number>args[0]
+      let deleteCount = <number>args[1]
+      if (deleteCount > 0) {
+        for (let i = 0; i < deleteCount; i++) {
+          changes.push({
+            status: 'deleted',
+            index: startIndex + i,
+            value: raw[startIndex + i],
+          })
+        }
+      }
+      for (let i = 2; i < args.length; i++) {
+        changes.push({
+          status: 'added',
+          index: startIndex + i - 2,
+          value: args[i],
+        })
+      }
+    }
+    let result = noTracking(this, 'splice', args)
+    if (raw.subscriptions && changes != null && changes.length > 0) {
+      if (raw.subscriptions instanceof Set) {
+        let items = Array.from(raw.subscriptions)
+        for (let i = 0; i < items.length; i++) {
+          let item: any = items[i]
+          if (typeof item === 'function') item(changes)
+          else item.handler.call(item.context, changes)
+        }
+      } else {
+        if (typeof raw.subscriptions === 'function') raw.subscriptions(changes)
+        else raw.subscriptions.handler.call(raw.subscriptions.context, changes)
+      }
+    }
+    return result
   },
 
   toReversed() {

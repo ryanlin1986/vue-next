@@ -127,7 +127,7 @@ class RefImpl<T = any> {
     this[ReactiveFlags.IS_SHALLOW] = isShallow
   }
 
-  get value() {
+  get value(): T {
     if (__DEV__) {
       this.dep.track({
         target: this,
@@ -161,10 +161,29 @@ class RefImpl<T = any> {
       } else {
         this.dep.trigger()
       }
+      if (this._subscriptions) {
+        if (this._subscriptions instanceof Set) {
+          let items = Array.from(this._subscriptions)
+          for (let i = 0; i < items.length; i++) {
+            let item = items[i]
+            if (typeof item === 'function') item(newValue, oldValue)
+            else item.changed.call(item.context, newValue, oldValue)
+          }
+        } else {
+          if (typeof this._subscriptions === 'function')
+            this._subscriptions(newValue, oldValue)
+          else
+            this._subscriptions.changed.call(
+              this._subscriptions.context,
+              newValue,
+              oldValue,
+            )
+        }
+      }
     }
   }
 
-  subscribe(changed: Function, context: any) {
+  subscribe(changed: Function, context: any): RefDisposal {
     if (context) {
       changed = <any>{
         changed: changed,
