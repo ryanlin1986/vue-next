@@ -642,7 +642,7 @@ function baseCreateRenderer(
   ) => {
     let el: RendererElement
     let vnodeHook: VNodeHook | undefined | null
-    const { props, shapeFlag, transition, dirs } = vnode
+    let { props, shapeFlag, transition, dirs } = vnode
 
     el = vnode.el = hostCreateElement(
       vnode.type as string,
@@ -671,6 +671,7 @@ function baseCreateRenderer(
     if (dirs) {
       invokeDirectiveHook(vnode, null, parentComponent, 'created')
     }
+    props = vnode.props
     // scopeId
     setScopeId(el, vnode, vnode.scopeId, slotScopeIds, parentComponent)
     // props

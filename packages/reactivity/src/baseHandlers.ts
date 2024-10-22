@@ -208,6 +208,12 @@ class MutableReactiveHandler extends BaseReactiveHandler {
     const oldValue = target[key]
     const result = Reflect.deleteProperty(target, key)
     if (result && hadKey) {
+      if (
+        isArray(target) &&
+        isIntegerKey(key) &&
+        (target as any)['__trackIndexAccess'] === undefined
+      )
+        return result
       trigger(target, TriggerOpTypes.DELETE, key, undefined, oldValue)
     }
     return result

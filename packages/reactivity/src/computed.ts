@@ -12,6 +12,7 @@ import type { Ref } from './ref'
 import { warn } from './warning'
 import { Dep, type Link, globalVersion } from './dep'
 import { ReactiveFlags, TrackOpTypes } from './constants'
+import { watch } from './watch'
 
 declare const ComputedRefSymbol: unique symbol
 declare const WritableComputedRefSymbol: unique symbol
@@ -166,7 +167,13 @@ export class ComputedRefImpl<T = any> implements Subscriber {
     }
   }
 
+  watch: any
   subscribe(changed: Function, context: any): { dispose: () => void } {
+    if (!this.watch) {
+      this.watch = watch(this, () => {
+        this.notifySubscriptions()
+      })
+    }
     if (context) changed = changed.bind(context)
     if (!this._subscriptions) {
       this.value
@@ -186,7 +193,7 @@ export class ComputedRefImpl<T = any> implements Subscriber {
   }
 
   dispose(): void {
-    // this.effect.stop()
+    if (this.watch) this.watch.stop()
   }
 }
 
