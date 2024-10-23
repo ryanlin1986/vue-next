@@ -130,15 +130,15 @@ export class ComputedRefImpl<T = any> implements Subscriber {
     }
   }
 
-  notifySubscriptions(): void {
+  notifySubscriptions(newwValue?: any, oldValue?: any): void {
     if (this._subscriptions) {
       if (this._subscriptions instanceof Array) {
         for (let i = 0; i < this._subscriptions.length; i++) {
           let sub = this._subscriptions[i]
-          sub()
+          sub(newwValue, oldValue)
         }
       } else {
-        this._subscriptions()
+        this._subscriptions(newwValue, oldValue)
       }
     }
   }
@@ -170,8 +170,8 @@ export class ComputedRefImpl<T = any> implements Subscriber {
   watch: any
   subscribe(changed: Function, context: any): { dispose: () => void } {
     if (!this.watch) {
-      this.watch = watch(this, () => {
-        this.notifySubscriptions()
+      this.watch = watch(this, (newwValue, oldValue) => {
+        this.notifySubscriptions(newwValue, oldValue)
       })
     }
     if (context) changed = changed.bind(context)
